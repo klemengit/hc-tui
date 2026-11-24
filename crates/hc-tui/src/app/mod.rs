@@ -395,6 +395,8 @@ pub struct App {
     /// Per-pane turn markers for `herdr.seen` — the reference's
     /// `looked`. Only currently-visible panes keep an entry.
     seen_looked: std::collections::HashMap<String, u64>,
+    /// `[ui] seen_after_ms`: the pane the dwell clock runs for.
+    dwell: Option<seen::Dwell>,
     /// Seen writes in flight — the same (pane, turn) never double-sends.
     seen_inflight: std::collections::HashSet<(String, u64)>,
     /// The dedicated label-write worker: fire-and-forget `terminal.label`

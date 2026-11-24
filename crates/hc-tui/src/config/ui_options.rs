@@ -84,6 +84,10 @@ pub struct UiConfig {
     /// hc-tui's own key: which agents `previous_agent` / `next_agent` step
     /// through, "all" or "active" (not idle or unknown). Default: "all".
     pub agent_cycle: AgentCycleConfig,
+    /// hc-tui's own key: milliseconds a pane must stay focused and visible
+    /// before its completion counts as seen (and `herdr.seen` is written).
+    /// 0 acknowledges on the first fresh paint, as herdr does. Default: 0.
+    pub seen_after_ms: u64,
     /// Agent status indicator style. Saved values are "dots" or "symbols". Default: "dots".
     pub status_indicators: StatusIndicatorStyle,
     /// Expanded sidebar row composition.
@@ -126,6 +130,7 @@ impl Default for UiConfig {
             agent_panel_space_headers: false,
             agent_panel: true,
             agent_cycle: AgentCycleConfig::All,
+            seen_after_ms: 0,
             status_indicators: StatusIndicatorStyle::Dots,
             sidebar: SidebarConfig::default(),
             accent: "cyan".into(),

@@ -165,6 +165,24 @@ fn agent_cycle_defaults_to_all_and_parses_each_value() {
 }
 
 #[test]
+fn seen_after_ms_defaults_to_zero_and_parses() {
+    assert_eq!(crate::config::UiConfig::default().seen_after_ms, 0);
+    assert_eq!(
+        load_text("[ui]\nsidebar_width = 30\n")
+            .config
+            .ui
+            .seen_after_ms,
+        0
+    );
+    let loaded = load_text("[ui]\nseen_after_ms = 1500\n");
+    assert_eq!(loaded.config.ui.seen_after_ms, 1500);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let loaded = load_text("[ui]\nseen_after_ms = -1\n");
+    assert_eq!(loaded.config.ui.seen_after_ms, 0);
+    assert!(!loaded.diagnostics.is_empty());
+}
+
+#[test]
 fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     let loaded = load_text("[ui]\nsidebar_width = 30\n");
     let nav = &loaded.config.live_keybinds().keybinds.navigate;

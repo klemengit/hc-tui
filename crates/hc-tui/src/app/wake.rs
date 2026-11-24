@@ -113,6 +113,7 @@ impl App {
             .chain(self.selection_highlight_clear_deadline)
             .chain(self.copy_feedback_deadline)
             .chain(self.waiting_due)
+            .chain(self.dwell_deadline())
             .chain(self.image_read.as_ref().map(|read| read.deadline))
             .chain(self.install_tick_deadline())
             .min()
@@ -191,7 +192,9 @@ impl App {
             self.drain_bells();
             dirty |= self.drain_clipboard_writes();
         }
-        if kind.shares() {
+        let dwell_reached = self.tick_dwell(now);
+        dirty |= dwell_reached;
+        if kind.shares() || dwell_reached {
             self.share_seen();
         }
         if kind.title() {

@@ -59,9 +59,13 @@ pub fn draw(app: &mut App, frame: &mut ratatui::Frame, _now: Instant) {
     let buf = frame.buffer_mut();
     // Source acknowledges a current visible surface during composition, so an
     // already viewed completion does not flash Done before its Idle frame.
+    if app.tick_dwell(Instant::now()) {
+        app.share_seen();
+    }
     let painted = app
         .visible_panes()
         .into_iter()
+        .filter(|id| app.seen_dwell_met(id))
         .filter(|id| app.displayed_pane(id).is_some_and(|p| p.has_fresh_paint()))
         .collect::<Vec<_>>();
     for pane_id in painted {

@@ -154,6 +154,16 @@ current markers. First observation of an epoch also baselines existing facts;
 previously seen epochs survive an empty inventory. Named-record removal drops
 its acknowledgement. No labels or shared seen state are written.
 
+hc-tui only: `[ui] seen_after_ms` (default `0`, in milliseconds) adds a dwell.
+With a value above 0 a completion is acknowledged only after its terminal has
+been the focused, visible pane for that long without a break, with the outer
+terminal not known unfocused. Passing over a Done agent (for example with
+`next_agent`) leaves it Done. Switching to another pane, tab or space, or the
+outer terminal losing focus, resets the clock. The sidebar redraws when the
+dwell ends, without new output. The `herdr.seen` write follows at that moment
+instead of on the first paint. Only the focused pane counts, not other panes
+visible in a split. `0` keeps the immediate acknowledgement described above.
+
 Priority recency follows reference ingestion receipts. Before watcher views
 coalesce, new agents and changed clocks allocate from the maximum receipt in
 the current cache; unchanged agents retain theirs and absent agents are pruned

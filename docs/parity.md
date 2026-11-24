@@ -705,6 +705,10 @@ Everything else on the compared surfaces still diffs normally.
   notification kinds still have no trigger in hc-tui and their keys are
   not parsed. `[ui.toast]` itself matches the reference, including the
   legacy `enabled` mapping and the 3600-second `delay_seconds` cap.
+- **Seen dwell.** Opt-in, no counterpart in the reference: with `[ui]
+  seen_after_ms = N` (N > 0) the acknowledgement of a completion and the
+  `herdr.seen` write wait until the terminal has been the focused, visible
+  pane for N ms; the default `0` is the reference's immediate rule.
 - **`herdr.seen` worker.** The label write and the turn rule are the
   reference's; hc-tui performs them on a dedicated channel worker so a
   failed write retries without touching layout operation results. The wire

@@ -211,6 +211,7 @@ impl App {
             notify_backend: crate::terminal_notify::detect_backend(),
             in_tmux: crate::terminal_notify::in_tmux(),
             seen_looked: Default::default(),
+            dwell: None,
             seen_inflight: Default::default(),
             seen_tx,
             seen_res_tx,

@@ -35,6 +35,7 @@ mod reload;
 mod remote_children;
 mod reveal_focus;
 mod review_regressions;
+mod seen_dwell;
 mod shared_rpc;
 mod space_agents;
 mod sync_output;

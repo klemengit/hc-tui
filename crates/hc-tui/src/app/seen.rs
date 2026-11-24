@@ -70,7 +70,72 @@ fn spawn_seen_worker(
     })
 }
 
+/// The dwell clock of `[ui] seen_after_ms`: one focused, visible pane and
+/// since when it has been continuously so.
+pub(super) struct Dwell {
+    pane: String,
+    since: Instant,
+    reached: bool,
+}
+
 impl App {
+    /// Advance the dwell clock. With `seen_after_ms = 0` there is none.
+    /// Otherwise it runs for the focused pane while that pane is visible and
+    /// the outer terminal is not known unfocused; any other state, or a
+    /// different pane, resets it. Returns true the moment the dwell is
+    /// reached, so the caller redraws (the acknowledgement happens in the
+    /// draw) and shares `herdr.seen` at that same moment.
+    pub(super) fn tick_dwell(&mut self, now: Instant) -> bool {
+        let dwell = std::time::Duration::from_millis(self.shell.seen_after_ms);
+        if dwell.is_zero() {
+            self.dwell = None;
+            return false;
+        }
+        let candidate = self
+            .focused
+            .clone()
+            .filter(|id| self.outer_focused != Some(false) && self.visible_panes().contains(id));
+        let Some(pane) = candidate else {
+            self.dwell = None;
+            return false;
+        };
+        let current = self.dwell.get_or_insert_with(|| Dwell {
+            pane: pane.clone(),
+            since: now,
+            reached: false,
+        });
+        if current.pane != pane {
+            *current = Dwell {
+                pane,
+                since: now,
+                reached: false,
+            };
+        }
+        if !current.reached && now.saturating_duration_since(current.since) >= dwell {
+            current.reached = true;
+            return true;
+        }
+        false
+    }
+
+    /// When the running dwell expires; the loop wakes then.
+    pub(super) fn dwell_deadline(&self) -> Option<Instant> {
+        self.dwell
+            .as_ref()
+            .filter(|dwell| !dwell.reached)
+            .map(|dwell| dwell.since + std::time::Duration::from_millis(self.shell.seen_after_ms))
+    }
+
+    /// Whether `pane` may be acknowledged as seen: always with no dwell,
+    /// otherwise only the focused pane once its dwell is reached.
+    pub(super) fn seen_dwell_met(&self, pane: &str) -> bool {
+        self.shell.seen_after_ms == 0
+            || self
+                .dwell
+                .as_ref()
+                .is_some_and(|dwell| dwell.reached && dwell.pane == pane)
+    }
+
     /// `set_operations` also starts the seen writer, once; a restart
     /// aborts the previous worker first.
     pub(super) fn start_seen_worker(&mut self, open: OpenRpc) {
@@ -90,7 +155,11 @@ impl App {
         if self.outer_focused == Some(false) {
             return;
         }
-        let visible: std::collections::HashSet<String> = self.visible_panes().into_iter().collect();
+        let visible: std::collections::HashSet<String> = self
+            .visible_panes()
+            .into_iter()
+            .filter(|id| self.seen_dwell_met(id))
+            .collect();
         self.seen_looked.retain(|id, _| visible.contains(id));
         for id in visible {
             let Some(term) = self.view.inventory.get(&id) else {
