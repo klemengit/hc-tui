@@ -97,11 +97,25 @@ impl App {
                     target.endpoint_id == active_endpoint_id
                         && Some(&target.pane_id) == focused_pane_id.as_ref()
                 });
-                match (current, action) {
-                    (Some(index), A::PreviousAgent) => (index + agents.len() - 1) % agents.len(),
-                    (Some(index), A::NextAgent) => (index + 1) % agents.len(),
-                    (None, A::PreviousAgent) => agents.len() - 1,
-                    _ => 0,
+                if self.shell.agent_cycle == crate::config::AgentCycleConfig::Active {
+                    let Some(index) = crate::chrome::space_agents::cycle_index(
+                        agents.len(),
+                        current,
+                        action == A::NextAgent,
+                        |i| crate::chrome::space_agents::is_active(agents[i].status),
+                    ) else {
+                        return;
+                    };
+                    index
+                } else {
+                    match (current, action) {
+                        (Some(index), A::PreviousAgent) => {
+                            (index + agents.len() - 1) % agents.len()
+                        }
+                        (Some(index), A::NextAgent) => (index + 1) % agents.len(),
+                        (None, A::PreviousAgent) => agents.len() - 1,
+                        _ => 0,
+                    }
                 }
             }
             _ => return,

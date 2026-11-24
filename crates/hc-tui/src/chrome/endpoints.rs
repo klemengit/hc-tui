@@ -111,6 +111,7 @@ pub(crate) struct AggregateAgentTarget {
     /// Index in `aggregate_agent_rows` — stale endpoints' rows still
     /// render, so this is the position the sidebar scrolls to.
     pub row_index: usize,
+    pub status: super::status::AgentStatus,
 }
 
 /// The agent rows previous/next/focus agent navigation may land on:
@@ -129,6 +130,7 @@ pub(crate) fn online_agent_targets(
             endpoint_id: row.endpoint.endpoint_id.clone(),
             pane_id: row.agent.pane_id.clone(),
             row_index,
+            status: row.agent.agent_status,
         })
         .collect()
 }

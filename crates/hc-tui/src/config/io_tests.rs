@@ -131,6 +131,40 @@ fn an_unknown_spaces_agents_value_is_a_config_error() {
 }
 
 #[test]
+fn agent_cycle_defaults_to_all_and_parses_each_value() {
+    use crate::config::AgentCycleConfig;
+    assert_eq!(
+        crate::config::UiConfig::default().agent_cycle,
+        AgentCycleConfig::All
+    );
+    assert_eq!(
+        load_text("[ui]\nsidebar_width = 30\n")
+            .config
+            .ui
+            .agent_cycle,
+        AgentCycleConfig::All
+    );
+    for (value, expected) in [
+        ("all", AgentCycleConfig::All),
+        ("active", AgentCycleConfig::Active),
+    ] {
+        let loaded = load_text(&format!("[ui]\nagent_cycle = '{value}'\n"));
+        assert_eq!(loaded.config.ui.agent_cycle, expected, "{value}");
+        assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    }
+    let loaded = load_text("[ui]\nagent_cycle = 'some'\n");
+    assert_eq!(loaded.config.ui.agent_cycle, AgentCycleConfig::All);
+    assert!(
+        loaded
+            .diagnostics
+            .iter()
+            .any(|d| d.starts_with("config parse error")),
+        "{:?}",
+        loaded.diagnostics
+    );
+}
+
+#[test]
 fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     let loaded = load_text("[ui]\nsidebar_width = 30\n");
     let nav = &loaded.config.live_keybinds().keybinds.navigate;

@@ -32,6 +32,18 @@ pub enum SpaceAgentsConfig {
     All,
 }
 
+/// Which agents `previous_agent` / `next_agent` step through
+/// (`[ui] agent_cycle`). hc-tui's own key; `all` is the herdr behaviour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AgentCycleConfig {
+    /// Every agent in the list, idle ones included.
+    #[default]
+    All,
+    /// Only agents whose status is working, waiting, done or blocked.
+    Active,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusIndicatorStyle {

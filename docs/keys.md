@@ -104,6 +104,8 @@ next_agent = "alt+down"
 ![Switching tabs and agents with Alt and the arrow keys](images/alt-arrows.gif)
 
 `Alt+Up` and `Alt+Down` follow the agents list, so one press can land in another pane, tab, workspace or machine.
+
+hc-tui only: `[ui] agent_cycle = "active"` (default `"all"`) makes `previous_agent` and `next_agent` skip idle and unknown agents and step only through working, waiting, done and blocked ones, in the list's order. If the focused agent is idle, next goes to the first active agent after it and previous to the first one before it (both wrap). With no active agent the keys do nothing. It works with `[ui] agent_panel = false`. The indexed `focus_agent` keys still count every agent. Herdr does not know this key.
 Machines that are offline are skipped. Plain shells aren't in the list: a program counts as an agent only while it has
 a status.
 

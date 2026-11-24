@@ -353,3 +353,77 @@ async fn machine_jumps_do_nothing_without_tree_navigation() {
     upper(&mut app, 'k');
     assert_eq!(app.navigate_target, before);
 }
+
+// ---- `[ui] agent_cycle` ----
+
+fn cycle_app(cycle: crate::config::AgentCycleConfig) -> App {
+    // Priority order: t3 blocked, t2 working, t1 idle.
+    let mut app = app_with_agents(SpaceAgentsConfig::None);
+    app.shell.agent_cycle = cycle;
+    app
+}
+
+fn step(app: &mut App, action: crate::input::KeybindAction) -> Option<String> {
+    app.on_action(action, 100);
+    app.focused.clone()
+}
+
+#[tokio::test]
+async fn agent_cycle_all_steps_through_idle_agents_too() {
+    use crate::input::KeybindAction as A;
+    let mut app = cycle_app(crate::config::AgentCycleConfig::All);
+    app.focused = Some("t2".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("t1"));
+}
+
+#[tokio::test]
+async fn agent_cycle_active_skips_idle_agents_with_the_panel_hidden() {
+    use crate::input::KeybindAction as A;
+    let mut app = cycle_app(crate::config::AgentCycleConfig::Active);
+    assert!(!app.shell.agent_panel);
+    app.focused = Some("t3".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("t2"));
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("t3"));
+    assert_eq!(step(&mut app, A::PreviousAgent).as_deref(), Some("t2"));
+    // An idle focused agent is not in the cycle.
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("t3"));
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::PreviousAgent).as_deref(), Some("t2"));
+}
+
+#[tokio::test]
+async fn agent_cycle_active_does_nothing_when_no_agent_is_active() {
+    use crate::input::KeybindAction as A;
+    let mut app = app_with_terms(vec![
+        named("t1", "idle", "one", "beta"),
+        named("t2", "idle", "one", "alpha"),
+    ]);
+    app.shell.agent_cycle = crate::config::AgentCycleConfig::Active;
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("t1"));
+    assert_eq!(step(&mut app, A::PreviousAgent).as_deref(), Some("t1"));
+}
+
+#[tokio::test]
+async fn agent_cycle_active_also_works_across_machines() {
+    use crate::input::KeybindAction as A;
+    let mut app = app_multi(
+        vec![
+            named("t1", "idle", "one", "a"),
+            named("host-a/t3", "idle", "three", "b"),
+            named("host-a/t4", "working", "four", "c"),
+        ],
+        vec![machine("host-a", "connected")],
+    );
+    app.shell.agent_cycle = crate::config::AgentCycleConfig::Active;
+    pending_attach(&mut app);
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("host-a/t4"));
+}

@@ -75,6 +75,8 @@ pub struct ClientShellConfig {
     pub agent_panel_space_headers: bool,
     /// `[ui] agent_panel` — draw the agents panel under the spaces list.
     pub agent_panel: bool,
+    /// `[ui] agent_cycle` — which agents previous/next agent step through.
+    pub agent_cycle: crate::config::AgentCycleConfig,
     pub status_indicators: StatusIndicatorStyle,
     pub theme_name: String,
     pub theme_runtime: ThemeRuntimeConfig,
@@ -165,6 +167,7 @@ impl ClientShellConfig {
             agent_panel_sort: ui.agent_panel_sort,
             agent_panel_space_headers: ui.agent_panel_space_headers,
             agent_panel: ui.agent_panel,
+            agent_cycle: ui.agent_cycle,
             status_indicators: ui.status_indicators,
             theme_name,
             theme_runtime,

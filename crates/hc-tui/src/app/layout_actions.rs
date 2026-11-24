@@ -118,6 +118,26 @@ impl App {
                 let at = ids.iter().position(|id| Some(id) == focus.as_ref());
                 let index = match action {
                     A::FocusAgent(i) => i,
+                    A::PreviousAgent | A::NextAgent
+                        if self.shell.agent_cycle == crate::config::AgentCycleConfig::Active =>
+                    {
+                        let Some(index) = crate::chrome::space_agents::cycle_index(
+                            ids.len(),
+                            at,
+                            action == A::NextAgent,
+                            |i| {
+                                snapshot.agents.iter().any(|agent| {
+                                    agent.pane_id == ids[i]
+                                        && crate::chrome::space_agents::is_active(
+                                            agent.agent_status,
+                                        )
+                                })
+                            },
+                        ) else {
+                            return;
+                        };
+                        index
+                    }
                     A::PreviousAgent => {
                         at.map_or(ids.len() - 1, |at| (at + ids.len() - 1) % ids.len())
                     }

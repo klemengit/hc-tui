@@ -17,6 +17,31 @@ pub(crate) fn is_active(status: AgentStatus) -> bool {
     !matches!(status, AgentStatus::Idle | AgentStatus::Unknown)
 }
 
+/// The index previous (`forward = false`) or next agent lands on among `len`
+/// agents in list order, when only those with `active(index)` count.
+/// `current` is the focused agent's index, or `None` when focus is not on an
+/// agent. A focused agent that is itself inactive is not in the cycle: next
+/// goes to the first active agent after it, previous to the first before it,
+/// both wrapping. With no focused agent next starts at the top of the list
+/// and previous at the bottom. `None` when no agent is active.
+pub(crate) fn cycle_index(
+    len: usize,
+    current: Option<usize>,
+    forward: bool,
+    active: impl Fn(usize) -> bool,
+) -> Option<usize> {
+    let start = current.unwrap_or(if forward { len.saturating_sub(1) } else { 0 });
+    (1..=len)
+        .map(|step| {
+            if forward {
+                (start + step) % len
+            } else {
+                (start + len - step % len) % len
+            }
+        })
+        .find(|&index| active(index))
+}
+
 /// What a space lists: the configured filter, or every agent while the
 /// navigate cursor is inside the space.
 pub(crate) fn effective_filter(configured: SpaceAgentsConfig, inside: bool) -> SpaceAgentsConfig {

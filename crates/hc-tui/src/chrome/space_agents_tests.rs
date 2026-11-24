@@ -142,3 +142,49 @@ fn rows_mark_the_cursor_agent() {
         [("t3", false), ("t4", false), ("t2", true), ("t1", false)]
     );
 }
+
+mod cycle {
+    use super::super::cycle_index;
+
+    /// Agents 0..5, active where `mask` has a true.
+    fn go(mask: &[bool], current: Option<usize>, forward: bool) -> Option<usize> {
+        cycle_index(mask.len(), current, forward, |i| mask[i])
+    }
+
+    const MASK: [bool; 5] = [true, false, true, false, false];
+
+    #[test]
+    fn steps_over_inactive_agents_and_wraps() {
+        assert_eq!(go(&MASK, Some(0), true), Some(2));
+        assert_eq!(go(&MASK, Some(2), true), Some(0));
+        assert_eq!(go(&MASK, Some(0), false), Some(2));
+        assert_eq!(go(&MASK, Some(2), false), Some(0));
+    }
+
+    #[test]
+    fn an_inactive_focused_agent_goes_to_the_neighbour_in_list_order() {
+        assert_eq!(go(&MASK, Some(1), true), Some(2));
+        assert_eq!(go(&MASK, Some(1), false), Some(0));
+        assert_eq!(go(&MASK, Some(4), true), Some(0), "wraps past the end");
+        assert_eq!(go(&MASK, Some(3), false), Some(2));
+    }
+
+    #[test]
+    fn no_focused_agent_starts_at_the_top_or_the_bottom() {
+        assert_eq!(go(&MASK, None, true), Some(0));
+        assert_eq!(go(&MASK, None, false), Some(2));
+    }
+
+    #[test]
+    fn nothing_active_or_empty_does_nothing() {
+        assert_eq!(go(&[false, false], Some(0), true), None);
+        assert_eq!(go(&[false, false], None, false), None);
+        assert_eq!(go(&[], None, true), None);
+    }
+
+    #[test]
+    fn a_single_active_agent_stays_put() {
+        assert_eq!(go(&[true, false], Some(0), true), Some(0));
+        assert_eq!(go(&[true, false], Some(0), false), Some(0));
+    }
+}

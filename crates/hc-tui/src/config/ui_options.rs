@@ -81,6 +81,9 @@ pub struct UiConfig {
     /// `false` the spaces list takes the whole sidebar height; agent
     /// next/previous actions keep working. Default: true.
     pub agent_panel: bool,
+    /// hc-tui's own key: which agents `previous_agent` / `next_agent` step
+    /// through, "all" or "active" (not idle or unknown). Default: "all".
+    pub agent_cycle: AgentCycleConfig,
     /// Agent status indicator style. Saved values are "dots" or "symbols". Default: "dots".
     pub status_indicators: StatusIndicatorStyle,
     /// Expanded sidebar row composition.
@@ -122,6 +125,7 @@ impl Default for UiConfig {
             agent_panel_sort: AgentPanelSortConfig::Priority,
             agent_panel_space_headers: false,
             agent_panel: true,
+            agent_cycle: AgentCycleConfig::All,
             status_indicators: StatusIndicatorStyle::Dots,
             sidebar: SidebarConfig::default(),
             accent: "cyan".into(),
