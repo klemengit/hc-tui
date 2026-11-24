@@ -126,6 +126,8 @@ pub enum SpaceSidebarToken {
     Workspace,
     Branch,
     GitStatus,
+    /// hc-tui's own token: the number of agents in the space.
+    AgentCount,
     Custom(String),
     Styled {
         token: Box<SpaceSidebarToken>,
@@ -296,6 +298,7 @@ impl<'de> Deserialize<'de> for SpaceSidebarToken {
                 ("workspace", Self::Workspace),
                 ("branch", Self::Branch),
                 ("git_status", Self::GitStatus),
+                ("agent_count", Self::AgentCount),
             ],
         )
         .map_err(serde::de::Error::custom)?;

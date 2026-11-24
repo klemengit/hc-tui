@@ -42,6 +42,16 @@ pub(crate) fn cycle_index(
         .find(|&index| active(index))
 }
 
+/// How many agents a space has, idle ones included: the rows the tree lists
+/// when the cursor is inside the space.
+pub(crate) fn space_agent_count(snapshot: &ClientShellSnapshot, workspace_id: &str) -> usize {
+    snapshot
+        .agents
+        .iter()
+        .filter(|agent| agent.workspace_id == workspace_id)
+        .count()
+}
+
 /// What a space lists: the configured filter, or every agent while the
 /// navigate cursor is inside the space.
 pub(crate) fn effective_filter(configured: SpaceAgentsConfig, inside: bool) -> SpaceAgentsConfig {

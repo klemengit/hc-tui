@@ -183,6 +183,22 @@ fn seen_after_ms_defaults_to_zero_and_parses() {
 }
 
 #[test]
+fn the_agent_count_space_token_parses_plain_styled_and_with_rules() {
+    use crate::config::SpaceSidebarToken as T;
+    let loaded = load_text(
+        "[ui.sidebar.spaces]\nrows = [['workspace', 'agent_count'], [{ token = 'agent_count', dim = true }], [{ token = 'agent_count', rules = [{ gt = 1, bold = true }] }]]\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let rows = &loaded.config.ui.sidebar.spaces.rows;
+    assert_eq!(rows[0][1], T::AgentCount);
+    assert!(matches!(&rows[1][0], T::Styled { token, .. } if **token == T::AgentCount));
+    assert!(matches!(&rows[2][0], T::Styled { rules, .. } if rules.len() == 1));
+    // The default rows do not use it.
+    let defaults = crate::config::SpacesSidebarConfig::default();
+    assert!(defaults.rows.iter().flatten().all(|t| *t != T::AgentCount));
+}
+
+#[test]
 fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     let loaded = load_text("[ui]\nsidebar_width = 30\n");
     let nav = &loaded.config.live_keybinds().keybinds.navigate;

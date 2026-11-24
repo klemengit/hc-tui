@@ -223,6 +223,7 @@ pub(crate) fn displayed_workspace_status(
 }
 
 pub(crate) fn workspace_rows(
+    snapshot: &ClientShellSnapshot,
     workspace: &ClientShellWorkspace,
     status: AgentStatus,
     indented: bool,
@@ -245,6 +246,10 @@ pub(crate) fn workspace_rows(
             branch: workspace.branch.as_deref(),
             state_text: status_text(status),
             ahead_behind: workspace.git_ahead_behind,
+            agent_count: crate::chrome::space_agents::space_agent_count(
+                snapshot,
+                &workspace.workspace_id,
+            ),
             tokens: &token_values,
             suppress_git_details: indented,
         },

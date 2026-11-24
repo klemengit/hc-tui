@@ -27,6 +27,8 @@ All notable changes to hc-tui are documented here. The format follows
 - `[ui.sidebar.spaces] agents` (default `"none"`): `"active"` or `"all"` lists
   each space's agents as indented rows under it, using the
   `[ui.sidebar.agents]` row layout.
+- Space row token `agent_count` for `[ui.sidebar.spaces] rows`: the number of
+  agents in the space, hidden at 0. Not in the default rows.
 - `[ui] seen_after_ms` (default `0`): a completion counts as seen, and
   `herdr.seen` is written, only after the pane stayed focused and visible for
   that many milliseconds.

@@ -23,6 +23,7 @@ pub(crate) enum ResolvedTokenKind {
     TerminalTitle(String),
     Branch(String),
     GitStatus { ahead: usize, behind: usize },
+    AgentCount(String),
     Custom(String),
 }
 
@@ -37,6 +38,7 @@ impl ResolvedTokenKind {
             | Self::Agent(value)
             | Self::TerminalTitle(value)
             | Self::Branch(value)
+            | Self::AgentCount(value)
             | Self::Custom(value) => Some(value),
             Self::StateIcon | Self::GitStatus { .. } => None,
         }
@@ -123,6 +125,8 @@ pub(crate) struct SpaceTokenContext<'a> {
     pub(crate) branch: Option<&'a str>,
     pub(crate) state_text: &'a str,
     pub(crate) ahead_behind: Option<(usize, usize)>,
+    /// Every agent of the space, idle included.
+    pub(crate) agent_count: usize,
     pub(crate) tokens: &'a std::collections::HashMap<String, String>,
     pub(crate) suppress_git_details: bool,
 }
@@ -156,6 +160,9 @@ pub(crate) fn space_rows(
                             .filter(|(ahead, behind)| *ahead > 0 || *behind > 0)
                             .map(|(ahead, behind)| ResolvedTokenKind::GitStatus { ahead, behind }),
                         SpaceSidebarToken::GitStatus => None,
+                        SpaceSidebarToken::AgentCount => (context.agent_count > 0).then(|| {
+                            ResolvedTokenKind::AgentCount(context.agent_count.to_string())
+                        }),
                         SpaceSidebarToken::Custom(name) => context
                             .tokens
                             .get(name)

@@ -427,3 +427,51 @@ async fn agent_cycle_active_also_works_across_machines() {
     app.refresh_projection();
     assert_eq!(step(&mut app, A::NextAgent).as_deref(), Some("host-a/t4"));
 }
+
+// ---- `agent_count` space token ----
+
+fn count_app(rows: &str) -> App {
+    let mut app = app_with_agents(SpaceAgentsConfig::None);
+    let dir = crate::test_support::TestDir::new("hctui-agent-count");
+    let path = dir.join("config.toml");
+    std::fs::write(&path, format!("[ui.sidebar.spaces]\nrows = {rows}\n")).unwrap();
+    let loaded = crate::config::load(&path);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    app.shell.spaces = loaded.config.ui.sidebar.spaces;
+    app
+}
+
+#[tokio::test]
+async fn the_agent_count_token_shows_every_agent_of_the_space_idle_included() {
+    // Space one has an idle and a working agent, two has one blocked agent.
+    let mut app = count_app("[['workspace', 'agent_count']]");
+    let lines = sidebar(&mut app);
+    let (_, one) = line_of(&lines, "one").unwrap();
+    let (_, two) = line_of(&lines, "two").unwrap();
+    assert!(one.contains("one · 2"), "{one}");
+    assert!(two.contains("two · 1"), "{two}");
+}
+
+#[tokio::test]
+async fn the_agent_count_token_renders_nothing_for_a_space_without_agents() {
+    let mut app = app_with_terms(vec![
+        named("t1", "idle", "one", "beta"),
+        super::endpoint_nav::spaced_term("t9", "empty"),
+    ]);
+    let dir = crate::test_support::TestDir::new("hctui-agent-count0");
+    let path = dir.join("config.toml");
+    std::fs::write(
+        &path,
+        "[ui.sidebar.spaces]\nrows = [['workspace', { token = 'agent_count', dim = true }]]\n",
+    )
+    .unwrap();
+    app.shell.spaces = crate::config::load(&path).config.ui.sidebar.spaces;
+    app.shell.agent_panel = false;
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    let lines = sidebar(&mut app);
+    let (_, one) = line_of(&lines, "one").unwrap();
+    let (_, empty) = line_of(&lines, "empty").unwrap();
+    assert!(one.contains("one · 1"), "{one}");
+    assert!(!empty.contains('·') && !empty.contains('0'), "{empty}");
+}

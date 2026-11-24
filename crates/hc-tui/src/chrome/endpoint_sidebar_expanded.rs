@@ -151,7 +151,8 @@ pub(crate) fn render_expanded(
                 let collapsed_groups = collapsed_groups_for_endpoint(state, &endpoint.endpoint_id)
                     .unwrap_or(&empty_collapsed_groups);
                 let status = displayed_workspace_status(snapshot, workspace, collapsed_groups);
-                let tokens = workspace_rows(workspace, status, entry.indented, &config.spaces);
+                let tokens =
+                    workspace_rows(snapshot, workspace, status, entry.indented, &config.spaces);
                 let height = (tokens.len().max(1).min(u16::MAX as usize) as u16).min(body.height);
                 if y.saturating_add(height) > body.bottom() {
                     break;

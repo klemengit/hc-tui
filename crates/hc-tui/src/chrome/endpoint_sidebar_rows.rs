@@ -100,6 +100,7 @@ pub(super) fn row_heights(
                         let workspace = snapshot.workspaces.get(entry.index)?;
                         Some(
                             workspace_rows(
+                                snapshot,
                                 workspace,
                                 displayed_workspace_status(snapshot, workspace, collapsed_groups),
                                 entry.indented,
