@@ -287,3 +287,69 @@ async fn tree_mode_is_off_on_the_collapsed_sidebar() {
     press_key(&mut app, 'l');
     assert!(app.navigate_agent.is_none());
 }
+
+// ---- machine jumps (`navigate_next_machine` / `navigate_prev_machine`) ----
+
+fn upper(app: &mut App, c: char) {
+    app.on_input(
+        input::UiEvent::Key(term_key(
+            hc_vt::Key::Char(c.to_ascii_lowercase()),
+            hc_vt::Mods::SHIFT,
+            hc_vt::Action::Press,
+        )),
+        100,
+    );
+}
+
+fn tree_two_machines() -> App {
+    let mut app = super::endpoint_nav::two_machine_app();
+    pending_attach(&mut app);
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    app.live.keybinds.navigate.tree = true;
+    app.enter_workspace_picker();
+    app
+}
+
+#[tokio::test]
+async fn shift_j_and_k_jump_between_machines_and_leave_an_open_space() {
+    let mut app = tree_two_machines();
+    let local = app.navigate_target.clone().unwrap();
+    assert_eq!(local.endpoint_id, ClientEndpointId::Local);
+    upper(&mut app, 'j');
+    assert_eq!(
+        app.navigate_target.as_ref().unwrap().endpoint_id,
+        remote("host-a")
+    );
+    let host_first = app.navigate_target.clone().unwrap();
+    // Inside a space, J also leaves it and jumps.
+    press_key(&mut app, 'l');
+    assert!(app.navigate_agent.is_some());
+    upper(&mut app, 'j');
+    assert!(app.navigate_agent.is_none());
+    assert_eq!(
+        app.navigate_target.as_ref().unwrap().endpoint_id,
+        ClientEndpointId::Local
+    );
+    // K from the second machine's second space: own first, then previous.
+    upper(&mut app, 'j');
+    assert_eq!(app.navigate_target, Some(host_first.clone()));
+    press_key(&mut app, 'j');
+    upper(&mut app, 'k');
+    assert_eq!(app.navigate_target, Some(host_first));
+    upper(&mut app, 'k');
+    assert_eq!(
+        app.navigate_target.as_ref().unwrap().endpoint_id,
+        ClientEndpointId::Local
+    );
+}
+
+#[tokio::test]
+async fn machine_jumps_do_nothing_without_tree_navigation() {
+    let mut app = tree_two_machines();
+    app.live.keybinds.navigate.tree = false;
+    let before = app.navigate_target.clone();
+    upper(&mut app, 'j');
+    upper(&mut app, 'k');
+    assert_eq!(app.navigate_target, before);
+}

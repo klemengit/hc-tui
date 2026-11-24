@@ -30,6 +30,9 @@ All notable changes to hc-tui are documented here. The format follows
 - `[keys] navigate_tree` (default `false`), `navigate_enter` (`"l"`) and
   `navigate_leave` (`"h"`): navigate mode walks spaces and, inside a space, its
   agents; `j`/`k` also move; `enter` on an agent focuses it.
+- `[keys] navigate_next_machine` (`"shift+j"`) and `navigate_prev_machine`
+  (`"shift+k"`): with `navigate_tree`, jump to the first space of the
+  next / current-then-previous machine, wrapping at the ends.
 
 ## 0.1.19 — 2026-11-24
 

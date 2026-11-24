@@ -239,6 +239,10 @@ pub struct NavigateKeybinds {
     pub enter: ActionKeybinds,
     /// hc-tui's `keys.navigate_leave`: close the open space.
     pub leave: ActionKeybinds,
+    /// hc-tui's `keys.navigate_next_machine`: first space of the next machine.
+    pub next_machine: ActionKeybinds,
+    /// hc-tui's `keys.navigate_prev_machine`: first space of this / the previous machine.
+    pub prev_machine: ActionKeybinds,
 }
 
 /// Parsed keybinds for Herdr actions.

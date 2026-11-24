@@ -320,6 +320,8 @@ pub enum Navigate {
     Enter,
     /// Tree navigation: move the cursor back out to the space.
     Leave,
+    /// Tree navigation: jump to the next (`1`) or previous (`-1`) machine.
+    MachineJump(i32),
 }
 
 /// Navigate-mode key routing, ported from `route_navigate_key`: Esc or any
@@ -358,6 +360,12 @@ pub fn navigate_key(
         }
         if nav.leave.matches_direct_key(&key) {
             return Some(Navigate::Leave);
+        }
+        if nav.next_machine.matches_direct_key(&key) {
+            return Some(Navigate::MachineJump(1));
+        }
+        if nav.prev_machine.matches_direct_key(&key) {
+            return Some(Navigate::MachineJump(-1));
         }
         if nav.pane_up.matches_direct_key(&key) {
             return Some(Navigate::Move(-1));

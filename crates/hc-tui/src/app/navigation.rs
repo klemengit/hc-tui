@@ -225,8 +225,23 @@ impl App {
                     self.shell_state.reveal_navigation_workspace = true;
                 }
             }
+            MachineJump(direction) if self.tree_navigation() => {
+                // From inside a space this also leaves it.
+                self.navigate_agent = None;
+                let mut targets = self.navigate_targets();
+                if let Some(index) = crate::chrome::navigate::machine_jump(
+                    &targets,
+                    self.navigate_target.as_ref(),
+                    direction > 0,
+                ) {
+                    let target = targets.swap_remove(index);
+                    self.reveal_workspace(&target);
+                    self.navigate_target = Some(target);
+                    self.shell_state.reveal_navigation_workspace = true;
+                }
+            }
             // Without tree navigation the keys do not exist.
-            Enter | Leave => {}
+            Enter | Leave | MachineJump(_) => {}
             Move(delta) if self.navigate_agent.is_some() => {
                 let agents = self.navigate_space_agents();
                 let current = agents

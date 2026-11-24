@@ -88,6 +88,8 @@ pub struct KeysConfigOverlay {
     pub navigate_tree: Option<bool>,
     pub navigate_enter: Option<BindingConfig>,
     pub navigate_leave: Option<BindingConfig>,
+    pub navigate_next_machine: Option<BindingConfig>,
+    pub navigate_prev_machine: Option<BindingConfig>,
     pub detach: Option<BindingConfig>,
     pub reload_config: Option<BindingConfig>,
     pub update: Option<BindingConfig>,
@@ -166,6 +168,12 @@ pub struct KeysConfig {
     pub navigate_enter: BindingConfig,
     /// hc-tui's own key: close the open space (tree navigation).
     pub navigate_leave: BindingConfig,
+    /// hc-tui's own key: jump to the first space of the next machine
+    /// (tree navigation).
+    pub navigate_next_machine: BindingConfig,
+    /// hc-tui's own key: jump to the first space of this machine, then of
+    /// the previous one (tree navigation).
+    pub navigate_prev_machine: BindingConfig,
     pub detach: BindingConfig,
     pub reload_config: BindingConfig,
     pub update: BindingConfig,
@@ -239,6 +247,8 @@ impl Default for KeysConfig {
             navigate_tree: false,
             navigate_enter: BindingConfig::one("l"),
             navigate_leave: BindingConfig::one("h"),
+            navigate_next_machine: BindingConfig::one("shift+j"),
+            navigate_prev_machine: BindingConfig::one("shift+k"),
             detach: BindingConfig::one("prefix+q"),
             reload_config: BindingConfig::one("prefix+shift+r"),
             update: BindingConfig::one("prefix+u"),
@@ -352,6 +362,8 @@ impl<'de> Deserialize<'de> for KeysConfig {
         apply_field!(navigate_tree);
         apply_field!(navigate_enter);
         apply_field!(navigate_leave);
+        apply_field!(navigate_next_machine);
+        apply_field!(navigate_prev_machine);
         apply_field!(detach);
         apply_field!(reload_config);
         apply_field!(update);

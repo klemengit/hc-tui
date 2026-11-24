@@ -137,6 +137,8 @@ fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     assert!(!nav.tree);
     assert_eq!(nav.enter.labels(), ["l"]);
     assert_eq!(nav.leave.labels(), ["h"]);
+    assert_eq!(nav.next_machine.labels(), ["shift+j"]);
+    assert_eq!(nav.prev_machine.labels(), ["shift+k"]);
     // The pane keys keep their own defaults and share h/l without a conflict.
     assert_eq!(nav.pane_left.labels(), ["h"]);
     assert_eq!(nav.pane_right.labels(), ["l"]);
@@ -153,6 +155,36 @@ fn navigate_tree_and_its_keys_parse_without_diagnostics() {
     assert!(nav.tree);
     assert_eq!(nav.enter.labels().len(), 2);
     assert_eq!(nav.leave.labels(), ["u"]);
+}
+
+#[test]
+fn machine_jump_keys_are_bindable_and_conflict_checked() {
+    let loaded = load_text(
+        "[keys]\nnavigate_tree = true\nnavigate_next_machine = ['n', 'shift+n']\nnavigate_prev_machine = 'p'\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let nav = &loaded.config.live_keybinds().keybinds.navigate;
+    assert_eq!(nav.next_machine.labels().len(), 2);
+    assert_eq!(nav.prev_machine.labels(), ["p"]);
+    // Same-key clash with navigate_enter: the first (enter) is kept.
+    let loaded = load_text("[keys]\nnavigate_next_machine = 'l'\nnavigate_enter = 'l'\n");
+    assert!(
+        loaded.diagnostics.iter().any(|d| d.contains("navigate_")),
+        "{:?}",
+        loaded.diagnostics
+    );
+    // Reserved keys are refused.
+    let loaded = load_text("[keys]\nnavigate_prev_machine = 'tab'\n");
+    assert!(
+        loaded
+            .config
+            .live_keybinds()
+            .keybinds
+            .navigate
+            .prev_machine
+            .labels()
+            .is_empty()
+    );
 }
 
 #[test]

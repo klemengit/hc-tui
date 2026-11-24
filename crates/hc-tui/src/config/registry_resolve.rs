@@ -32,6 +32,8 @@ impl Config {
                 tree: self.keys.navigate_tree,
                 enter: ActionKeybinds::default(),
                 leave: ActionKeybinds::default(),
+                next_machine: ActionKeybinds::default(),
+                prev_machine: ActionKeybinds::default(),
             },
             help: ActionKeybinds::default(),
             settings: ActionKeybinds::default(),
@@ -268,7 +270,7 @@ impl Config {
             }
         }
 
-        let (enter, leave) = parse_tree_navigate_bindings(
+        let mut tree = parse_tree_navigate_bindings(
             &prefix,
             prefix_source,
             [
@@ -281,14 +283,35 @@ impl Config {
                     &keybinds.navigate.workspace_down,
                 ),
             ],
-            &self.keys.navigate_enter,
-            field_source!(navigate_enter),
-            &self.keys.navigate_leave,
-            field_source!(navigate_leave),
+            [
+                (
+                    "keys.navigate_enter",
+                    &self.keys.navigate_enter,
+                    field_source!(navigate_enter),
+                ),
+                (
+                    "keys.navigate_leave",
+                    &self.keys.navigate_leave,
+                    field_source!(navigate_leave),
+                ),
+                (
+                    "keys.navigate_next_machine",
+                    &self.keys.navigate_next_machine,
+                    field_source!(navigate_next_machine),
+                ),
+                (
+                    "keys.navigate_prev_machine",
+                    &self.keys.navigate_prev_machine,
+                    field_source!(navigate_prev_machine),
+                ),
+            ],
             &mut diagnostics,
-        );
-        keybinds.navigate.enter = enter;
-        keybinds.navigate.leave = leave;
+        )
+        .into_iter();
+        keybinds.navigate.enter = tree.next().unwrap_or_default();
+        keybinds.navigate.leave = tree.next().unwrap_or_default();
+        keybinds.navigate.next_machine = tree.next().unwrap_or_default();
+        keybinds.navigate.prev_machine = tree.next().unwrap_or_default();
 
         (prefix_diag, prefix, diagnostics, keybinds)
     }

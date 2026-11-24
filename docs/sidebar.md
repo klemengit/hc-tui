@@ -197,6 +197,8 @@ with the collapsed sidebar navigate mode stays flat.
 | `[keys] navigate_tree` | `false` | Turns tree navigation on. |
 | `[keys] navigate_enter` | `"l"` | Moves the cursor from the space into its agents. The space lists all its agents, idle ones included, while the cursor is inside, even with `agents = "none"`. Does nothing for a space without agents. |
 | `[keys] navigate_leave` | `"h"` | Moves the cursor back to the space. The idle agents hide again. |
+| `[keys] navigate_next_machine` | `"shift+j"` | Jumps to the first space of the next machine. |
+| `[keys] navigate_prev_machine` | `"shift+k"` | Jumps to the first space of the current machine; when the cursor is already there, to the first space of the previous machine (like a paragraph motion in vim). |
 
 With tree navigation on, the cursor starts on a space and the workspace up/down
 keys (`up`/`down`) move between spaces and skip the child agent rows. `j` and
@@ -206,10 +208,18 @@ wrap around. `enter` on an agent focuses its pane or tab and leaves navigate
 mode; `enter` on a space jumps to the space as before. `esc` cancels from
 either level. `1..9` still select a space.
 
+Machine jumps work at the space level and from inside a space; from inside
+they also close the space. Both wrap around at the ends. Machines are the
+groups in sidebar order. A machine that is not online or has no spaces has
+nothing to land on and is skipped. A collapsed project group does not hide
+its machine: its first visible space is the target. With one machine, the
+jumps move to that machine's first space.
+
 Key conflicts: hc-tui does not use `navigate_pane_left/down/up/right` for
 focus in navigate mode, so the default `h` / `l` for leave / enter share keys
 with them without a conflict. `navigate_enter` and `navigate_leave` are checked
-before the `j`/`k` aliases, so rebinding them to those keys works. They cannot
+before the `j`/`k` aliases, so rebinding them to those keys works. `navigate_next_machine` and
+`navigate_prev_machine` follow the same checks. They cannot
 take the prefix, `esc`, `enter`, `tab`, `left`, `right`, `1..9` or the
 workspace up/down keys; a rejected binding gives a config diagnostic.
 

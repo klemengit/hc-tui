@@ -247,6 +247,14 @@ pub(crate) fn keybind_help_groups(
             ),
             "next / previous row",
         ));
+        entries.push(entry(
+            format!(
+                "{} / {}",
+                binding_label(&keybinds.navigate.next_machine),
+                binding_label(&keybinds.navigate.prev_machine)
+            ),
+            "next / previous machine",
+        ));
     }
     groups.push((
         "hc-tui",

@@ -449,22 +449,19 @@ fn append_custom_command_bindings(
     }
 }
 
-/// hc-tui: resolve `keys.navigate_enter` / `keys.navigate_leave` (tree
-/// navigation). They get their own registry, which holds the prefix, the
-/// reserved navigate keys and the workspace up/down bindings but not the
-/// pane h/j/k/l keys: hc-tui does not route those in navigate mode, so the
-/// default `l` / `h` can share a key with `navigate_pane_right` / `_left`.
-#[allow(clippy::too_many_arguments)]
-fn parse_tree_navigate_bindings(
+/// hc-tui: resolve the tree-navigation keys (`navigate_enter`, `_leave`,
+/// `_next_machine`, `_prev_machine`), in the order given. They get their own
+/// registry, which holds the prefix, the reserved navigate keys and the
+/// workspace up/down bindings but not the pane h/j/k/l keys: hc-tui does not
+/// route those in navigate mode, so the default `l` / `h` can share a key
+/// with `navigate_pane_right` / `_left`.
+fn parse_tree_navigate_bindings<const N: usize>(
     prefix_keys: &[KeyCombo],
     prefix_source: BindingSource,
     workspace: [(&'static str, &ActionKeybinds); 2],
-    enter: &BindingConfig,
-    enter_source: BindingSource,
-    leave: &BindingConfig,
-    leave_source: BindingSource,
+    tree: [(&'static str, &BindingConfig, BindingSource); N],
     diagnostics: &mut Vec<String>,
-) -> (ActionKeybinds, ActionKeybinds) {
+) -> [ActionKeybinds; N] {
     let mut registry = BindingRegistry::new(prefix_keys.to_vec(), prefix_source);
     registry.reserve_prefix_keys("keys.prefix", prefix_source);
     reserve_navigate_runtime_keys(&mut registry);
@@ -473,30 +470,16 @@ fn parse_tree_navigate_bindings(
             registry.register(binding, field, BindingSource::User);
         }
     }
+    let mut out: [ActionKeybinds; N] = std::array::from_fn(|_| ActionKeybinds::default());
     // User-configured keys register first so they displace default ones.
-    let mut enter_out = ActionKeybinds::default();
-    let mut leave_out = ActionKeybinds::default();
     for source in [BindingSource::User, BindingSource::Default] {
-        if enter_source == source {
-            enter_out = parse_navigate_bindings(
-                "keys.navigate_enter",
-                enter,
-                &mut registry,
-                diagnostics,
-                source,
-            );
-        }
-        if leave_source == source {
-            leave_out = parse_navigate_bindings(
-                "keys.navigate_leave",
-                leave,
-                &mut registry,
-                diagnostics,
-                source,
-            );
+        for (slot, (field, config, field_source)) in out.iter_mut().zip(&tree) {
+            if *field_source == source {
+                *slot = parse_navigate_bindings(field, config, &mut registry, diagnostics, source);
+            }
         }
     }
-    (enter_out, leave_out)
+    out
 }
 
 #[path = "registry_resolve.rs"]

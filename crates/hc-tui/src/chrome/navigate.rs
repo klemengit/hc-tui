@@ -147,3 +147,101 @@ pub(crate) fn move_index(
         None => 0,
     })
 }
+
+/// Tree navigation machine jump over the flat target list, whose targets
+/// are grouped by machine in sidebar order (offline, empty and snapshot-less
+/// machines have no targets, so they are skipped). Forward goes to the first
+/// space of the next machine. Backward goes to the first space of the
+/// current machine, or, when the cursor is already there, of the previous
+/// one. Both wrap around the ends. `None` when there is no current target.
+pub(crate) fn machine_jump(
+    targets: &[WorkspaceNavigationTarget],
+    current: Option<&WorkspaceNavigationTarget>,
+    forward: bool,
+) -> Option<usize> {
+    let current = current?;
+    let at = targets
+        .iter()
+        .position(|t| t.matches(&current.endpoint_id, &current.workspace_id))?;
+    let mut starts: Vec<usize> = Vec::new();
+    for (index, target) in targets.iter().enumerate() {
+        if index == 0 || targets[index - 1].endpoint_id != target.endpoint_id {
+            starts.push(index);
+        }
+    }
+    // The group the cursor is in: the last start at or before it.
+    let group = starts.iter().rposition(|&start| start <= at)?;
+    let wanted = if forward {
+        (group + 1) % starts.len()
+    } else if starts[group] != at {
+        group
+    } else {
+        (group + starts.len() - 1) % starts.len()
+    };
+    Some(starts[wanted])
+}
+
+#[cfg(test)]
+mod machine_jump_tests {
+    use super::*;
+
+    fn target(machine: &str, workspace: &str) -> WorkspaceNavigationTarget {
+        WorkspaceNavigationTarget {
+            endpoint_id: if machine.is_empty() {
+                ClientEndpointId::Local
+            } else {
+                ClientEndpointId::Remote(machine.into())
+            },
+            workspace_id: workspace.into(),
+            boot_id: String::new(),
+            generation: None,
+        }
+    }
+
+    /// local: a b c | host-a: d e | host-b: f
+    fn targets() -> Vec<WorkspaceNavigationTarget> {
+        vec![
+            target("", "a"),
+            target("", "b"),
+            target("", "c"),
+            target("host-a", "d"),
+            target("host-a", "e"),
+            target("host-b", "f"),
+        ]
+    }
+
+    fn jump(from: usize, forward: bool) -> usize {
+        let targets = targets();
+        machine_jump(&targets, Some(&targets[from]), forward).unwrap()
+    }
+
+    #[test]
+    fn forward_goes_to_the_first_space_of_the_next_machine_and_wraps() {
+        assert_eq!(jump(0, true), 3);
+        assert_eq!(jump(2, true), 3);
+        assert_eq!(jump(4, true), 5);
+        assert_eq!(jump(5, true), 0);
+    }
+
+    #[test]
+    fn backward_goes_to_the_own_machine_start_first_then_the_previous_machine() {
+        assert_eq!(jump(4, false), 3, "inside host-a: its own first space");
+        assert_eq!(
+            jump(3, false),
+            0,
+            "on host-a's first space: previous machine"
+        );
+        assert_eq!(jump(2, false), 0);
+        assert_eq!(jump(0, false), 5, "wraps to the last machine");
+    }
+
+    #[test]
+    fn one_machine_jumps_within_itself_and_nothing_jumps_without_a_cursor() {
+        let one = vec![target("", "a"), target("", "b")];
+        assert_eq!(machine_jump(&one, Some(&one[1]), true), Some(0));
+        assert_eq!(machine_jump(&one, Some(&one[1]), false), Some(0));
+        assert_eq!(machine_jump(&one, Some(&one[0]), false), Some(0));
+        assert_eq!(machine_jump(&one, None, true), None);
+        assert_eq!(machine_jump(&[], Some(&one[0]), true), None);
+    }
+}
