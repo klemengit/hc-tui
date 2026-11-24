@@ -228,6 +228,26 @@ pub(crate) fn keybind_help_groups(
                 .collect(),
         ));
     }
+    if keybinds.navigate.tree
+        && let Some((_, entries)) = groups.iter_mut().find(|(name, _)| *name == "navigation")
+    {
+        entries.push(entry(
+            format!(
+                "{} / {}",
+                binding_label(&keybinds.navigate.enter),
+                binding_label(&keybinds.navigate.leave)
+            ),
+            "open / close space",
+        ));
+        entries.push(entry(
+            format!(
+                "{} / {}",
+                binding_label(&keybinds.navigate.pane_down),
+                binding_label(&keybinds.navigate.pane_up)
+            ),
+            "next / previous row",
+        ));
+    }
     groups.push((
         "hc-tui",
         vec![entry(binding_label(&keybinds.update), "update")],

@@ -186,6 +186,33 @@ the same `config.toml` reports them as unknown keys.
 | `[ui.sidebar.spaces] agents` | `"none"` | Lists agents as indented rows under their space: `"none"` lists nothing, `"active"` lists the space's agents that are not idle or unknown (working, waiting, done, blocked), `"all"` lists every agent. A row uses the `[ui.sidebar.agents]` row layout and tokens. Rows are ordered like the agents panel's priority view. With several machines each machine lists its own agents; a collapsed machine lists none. A click on a row focuses the agent. |
 | `[ui] agent_panel` | `true` | `false` hides the agents panel. The spaces list takes the whole sidebar height and the section divider disappears. Agent next/previous and the agent shortcuts keep working. The collapsed sidebar drops its agent icons too. The mobile switcher is not affected. |
 
+### Tree navigation in navigate mode
+
+`[keys] navigate_tree = true` makes navigate mode (prefix then `w`) walk the
+spaces list as a tree. It needs the expanded desktop sidebar; on mobile and
+with the collapsed sidebar navigate mode stays flat.
+
+| Key | Default | Effect |
+|---|---|---|
+| `[keys] navigate_tree` | `false` | Turns tree navigation on. |
+| `[keys] navigate_enter` | `"l"` | Moves the cursor from the space into its agents. The space lists all its agents, idle ones included, while the cursor is inside, even with `agents = "none"`. Does nothing for a space without agents. |
+| `[keys] navigate_leave` | `"h"` | Moves the cursor back to the space. The idle agents hide again. |
+
+With tree navigation on, the cursor starts on a space and the workspace up/down
+keys (`up`/`down`) move between spaces and skip the child agent rows. `j` and
+`k` do the same (they are `navigate_pane_down` / `navigate_pane_up` acting as
+extra up/down keys). Inside a space the same keys move between its agents and
+wrap around. `enter` on an agent focuses its pane or tab and leaves navigate
+mode; `enter` on a space jumps to the space as before. `esc` cancels from
+either level. `1..9` still select a space.
+
+Key conflicts: hc-tui does not use `navigate_pane_left/down/up/right` for
+focus in navigate mode, so the default `h` / `l` for leave / enter share keys
+with them without a conflict. `navigate_enter` and `navigate_leave` are checked
+before the `j`/`k` aliases, so rebinding them to those keys works. They cannot
+take the prefix, `esc`, `enter`, `tab`, `left`, `right`, `1..9` or the
+workspace up/down keys; a rejected binding gives a config diagnostic.
+
 ## Machines, selection and geometry
 
 Core machine and connection states map to herdr's endpoint states. The

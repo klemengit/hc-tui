@@ -214,6 +214,7 @@ impl App {
                 self.exit_copy_mode(false);
                 self.mode = Mode::Normal;
                 self.navigate_target = None;
+                self.navigate_agent = None;
                 self.selection = None;
                 self.clear_popup_selection();
                 self.stop_selection_autoscroll();

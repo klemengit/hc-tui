@@ -131,6 +131,46 @@ fn an_unknown_spaces_agents_value_is_a_config_error() {
 }
 
 #[test]
+fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
+    let loaded = load_text("[ui]\nsidebar_width = 30\n");
+    let nav = &loaded.config.live_keybinds().keybinds.navigate;
+    assert!(!nav.tree);
+    assert_eq!(nav.enter.labels(), ["l"]);
+    assert_eq!(nav.leave.labels(), ["h"]);
+    // The pane keys keep their own defaults and share h/l without a conflict.
+    assert_eq!(nav.pane_left.labels(), ["h"]);
+    assert_eq!(nav.pane_right.labels(), ["l"]);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+}
+
+#[test]
+fn navigate_tree_and_its_keys_parse_without_diagnostics() {
+    let loaded = load_text(
+        "[keys]\nnavigate_tree = true\nnavigate_enter = ['p', 'o']\nnavigate_leave = 'u'\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let nav = &loaded.config.live_keybinds().keybinds.navigate;
+    assert!(nav.tree);
+    assert_eq!(nav.enter.labels().len(), 2);
+    assert_eq!(nav.leave.labels(), ["u"]);
+}
+
+#[test]
+fn navigate_enter_cannot_take_a_workspace_navigation_key() {
+    let loaded = load_text("[keys]\nnavigate_enter = 'down'\n");
+    assert!(
+        loaded
+            .diagnostics
+            .iter()
+            .any(|d| d.contains("navigate_enter")),
+        "{:?}",
+        loaded.diagnostics
+    );
+    let nav = &loaded.config.live_keybinds().keybinds.navigate;
+    assert!(nav.enter.labels().is_empty());
+}
+
+#[test]
 fn herdr_only_experimental_keys_are_accepted_and_ignored() {
     let loaded = load_text("[experimental]\npane_history = true\n");
     assert!(loaded.diagnostics.is_empty());

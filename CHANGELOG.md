@@ -27,6 +27,9 @@ All notable changes to hc-tui are documented here. The format follows
 - `[ui.sidebar.spaces] agents` (default `"none"`): `"active"` or `"all"` lists
   each space's agents as indented rows under it, using the
   `[ui.sidebar.agents]` row layout.
+- `[keys] navigate_tree` (default `false`), `navigate_enter` (`"l"`) and
+  `navigate_leave` (`"h"`): navigate mode walks spaces and, inside a space, its
+  agents; `j`/`k` also move; `enter` on an agent focuses it.
 
 ## 0.1.19 — 2026-11-24
 

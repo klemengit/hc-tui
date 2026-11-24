@@ -234,6 +234,9 @@ pub struct App {
     /// The pending workspace highlight Navigate moves — highlight-only
     /// until Enter; the pane keeps its active attach meanwhile.
     navigate_target: Option<WorkspaceNavigationTarget>,
+    /// Tree navigation: the pane id of the agent row the cursor is on,
+    /// inside the highlighted space. `None` = the cursor is on the space.
+    navigate_agent: Option<String>,
     /// Sidebar/tab/agent scroll + collapse state the chrome mutates
     /// through `ShellRenderState` borrows each frame.
     pub(crate) shell_state: ShellState,

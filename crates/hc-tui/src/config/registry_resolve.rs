@@ -29,6 +29,9 @@ impl Config {
                 pane_down: ActionKeybinds::default(),
                 pane_up: ActionKeybinds::default(),
                 pane_right: ActionKeybinds::default(),
+                tree: self.keys.navigate_tree,
+                enter: ActionKeybinds::default(),
+                leave: ActionKeybinds::default(),
             },
             help: ActionKeybinds::default(),
             settings: ActionKeybinds::default(),
@@ -264,6 +267,28 @@ impl Config {
                 );
             }
         }
+
+        let (enter, leave) = parse_tree_navigate_bindings(
+            &prefix,
+            prefix_source,
+            [
+                (
+                    "keys.navigate_workspace_up",
+                    &keybinds.navigate.workspace_up,
+                ),
+                (
+                    "keys.navigate_workspace_down",
+                    &keybinds.navigate.workspace_down,
+                ),
+            ],
+            &self.keys.navigate_enter,
+            field_source!(navigate_enter),
+            &self.keys.navigate_leave,
+            field_source!(navigate_leave),
+            &mut diagnostics,
+        );
+        keybinds.navigate.enter = enter;
+        keybinds.navigate.leave = leave;
 
         (prefix_diag, prefix, diagnostics, keybinds)
     }

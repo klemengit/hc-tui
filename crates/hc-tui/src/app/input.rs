@@ -316,6 +316,10 @@ pub enum Navigate {
     Select(usize),
     /// Leave Navigate back to the focused terminal.
     Cancel,
+    /// Tree navigation: move the cursor into the highlighted space.
+    Enter,
+    /// Tree navigation: move the cursor back out to the space.
+    Leave,
 }
 
 /// Navigate-mode key routing, ported from `route_navigate_key`: Esc or any
@@ -345,6 +349,22 @@ pub fn navigate_key(
     }
     if nav.workspace_down.matches_direct_key(&key) {
         return Some(Navigate::Move(1));
+    }
+    if nav.tree {
+        // Tree navigation (`keys.navigate_tree`). The explicit enter/leave
+        // bindings win over the pane up/down aliases below.
+        if nav.enter.matches_direct_key(&key) {
+            return Some(Navigate::Enter);
+        }
+        if nav.leave.matches_direct_key(&key) {
+            return Some(Navigate::Leave);
+        }
+        if nav.pane_up.matches_direct_key(&key) {
+            return Some(Navigate::Move(-1));
+        }
+        if nav.pane_down.matches_direct_key(&key) {
+            return Some(Navigate::Move(1));
+        }
     }
     let (code, mods) = crate::config::normalize_key_combo((key.code, key.modifiers));
     if code == crossterm::event::KeyCode::Enter && mods.is_empty() {

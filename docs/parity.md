@@ -788,6 +788,13 @@ Everything else on the compared surfaces still diffs normally.
   The default `"none"` draws the reference's spaces list. It works on the
   single-machine and multi-machine sidebars; a collapsed machine shows no
   children.
+- **Tree navigation.** Opt-in: with `[keys] navigate_tree = true`, navigate
+  mode adds `navigate_enter` (`l`) and `navigate_leave` (`h`) and treats
+  `navigate_pane_down` / `_up` (`j` / `k`) as extra down/up keys. `l` opens
+  the space under the cursor (all its agents listed, idle included) and the
+  cursor walks them; `enter` on an agent focuses it. The reference routes no
+  pane keys in navigate mode here, so the defaults do not conflict. Off by
+  default; unused on mobile and the collapsed sidebar.
 - **Optional agents panel.** Opt-in: with `[ui] agent_panel = false` the
   spaces list takes the whole sidebar height and the agents panel, its
   header and the section divider are not drawn (the collapsed sidebar loses

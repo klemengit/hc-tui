@@ -157,3 +157,133 @@ async fn machines_list_their_own_agents_and_collapsed_ones_list_none() {
     assert!(line_of(&lines, "alpha").is_some(), "{lines:#?}");
     assert!(line_of(&lines, "gamma").is_none(), "{lines:#?}");
 }
+
+// ---- tree navigation (`keys.navigate_tree`) ----
+
+fn press_key(app: &mut App, c: char) {
+    app.on_input(
+        input::UiEvent::Key(term_key(
+            hc_vt::Key::Char(c),
+            hc_vt::Mods::NONE,
+            hc_vt::Action::Press,
+        )),
+        100,
+    );
+}
+
+fn press_named(app: &mut App, key: hc_vt::Key) {
+    app.on_input(
+        input::UiEvent::Key(term_key(key, hc_vt::Mods::NONE, hc_vt::Action::Press)),
+        100,
+    );
+}
+
+/// Navigate mode on the app above with tree navigation on and the
+/// cursor on space `one` (whose agents are t1 idle `beta`, t2 `alpha`).
+fn tree_app(mode: SpaceAgentsConfig) -> App {
+    let mut app = app_with_agents(mode);
+    app.live.keybinds.navigate.tree = true;
+    app.enter_workspace_picker();
+    app.sync_target();
+    app
+}
+
+#[tokio::test]
+async fn tree_mode_lists_every_agent_of_the_open_space_even_with_agents_none() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    let lines = sidebar(&mut app);
+    assert!(line_of(&lines, "beta").is_none(), "{lines:#?}");
+    press_key(&mut app, 'l');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t2"));
+    let lines = sidebar(&mut app);
+    let (alpha, _) = line_of(&lines, "alpha").expect("alpha listed");
+    let (beta, _) = line_of(&lines, "beta").expect("idle beta listed");
+    assert!(alpha < beta, "{lines:#?}");
+    assert!(line_of(&lines, "gamma").is_none(), "{lines:#?}");
+    // h closes the space again and the idle agent hides.
+    press_key(&mut app, 'h');
+    assert!(app.navigate_agent.is_none());
+    let lines = sidebar(&mut app);
+    assert!(line_of(&lines, "beta").is_none(), "{lines:#?}");
+}
+
+#[tokio::test]
+async fn j_and_k_skip_child_rows_on_spaces_and_walk_agents_inside() {
+    let mut app = tree_app(SpaceAgentsConfig::All);
+    let one = app.navigate_target.clone().unwrap();
+    press_key(&mut app, 'j');
+    let two = app.navigate_target.clone().unwrap();
+    assert_ne!(one.workspace_id, two.workspace_id);
+    assert!(app.navigate_agent.is_none());
+    press_key(&mut app, 'k');
+    assert_eq!(
+        app.navigate_target.as_ref().unwrap().workspace_id,
+        one.workspace_id
+    );
+    press_key(&mut app, 'l');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t2"));
+    press_key(&mut app, 'j');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t1"));
+    press_key(&mut app, 'j');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t2"), "wraps");
+    press_key(&mut app, 'k');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t1"));
+    // The target space did not change while inside.
+    assert_eq!(
+        app.navigate_target.as_ref().unwrap().workspace_id,
+        one.workspace_id
+    );
+}
+
+#[tokio::test]
+async fn enter_on_an_agent_focuses_it_and_leaves_navigate() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    press_key(&mut app, 'l');
+    press_key(&mut app, 'j');
+    press_named(&mut app, hc_vt::Key::Enter);
+    assert_eq!(app.focused.as_deref(), Some("t1"));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.navigate_agent.is_none());
+    assert!(app.navigate_target.is_none());
+}
+
+#[tokio::test]
+async fn enter_on_a_space_still_jumps_to_the_space() {
+    let mut app = tree_app(SpaceAgentsConfig::All);
+    press_key(&mut app, 'j');
+    press_named(&mut app, hc_vt::Key::Enter);
+    assert_eq!(app.mode, Mode::Normal);
+    assert_eq!(app.focused.as_deref(), Some("t3"));
+}
+
+#[tokio::test]
+async fn escape_cancels_from_inside_a_space() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    let before = app.focused.clone();
+    press_key(&mut app, 'l');
+    press_named(&mut app, hc_vt::Key::Escape);
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.navigate_agent.is_none());
+    assert_eq!(app.focused, before);
+}
+
+#[tokio::test]
+async fn without_the_option_h_j_k_l_do_nothing_in_navigate_mode() {
+    let mut app = app_with_agents(SpaceAgentsConfig::None);
+    app.enter_workspace_picker();
+    let target = app.navigate_target.clone();
+    for c in ['l', 'j', 'k', 'h'] {
+        press_key(&mut app, c);
+    }
+    assert!(app.navigate_agent.is_none());
+    assert_eq!(app.navigate_target, target);
+    assert_eq!(app.mode, Mode::Navigate);
+}
+
+#[tokio::test]
+async fn tree_mode_is_off_on_the_collapsed_sidebar() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    app.shell_state.sidebar_collapsed = true;
+    press_key(&mut app, 'l');
+    assert!(app.navigate_agent.is_none());
+}

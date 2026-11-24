@@ -76,6 +76,54 @@ fn navigate_consumes_navigation_and_cancel() {
         None
     );
 }
+
+fn tree_live(extra: &str) -> crate::config::LiveKeybindConfig {
+    let text = format!("[keys]\nnavigate_tree = true\n{extra}");
+    let dir = crate::test_support::TestDir::new("hctui-tree-keys");
+    let path = dir.join("config.toml");
+    std::fs::write(&path, text).unwrap();
+    let loaded = crate::config::load(&path);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    loaded.config.live_keybinds()
+}
+
+#[test]
+fn navigate_tree_keys_are_off_by_default() {
+    let live = live();
+    for c in ['h', 'j', 'k', 'l'] {
+        assert_eq!(navigate_key(&press(Key::Char(c), Mods::NONE), &live), None);
+    }
+}
+
+#[test]
+fn navigate_tree_adds_enter_leave_and_jk() {
+    let live = tree_live("");
+    let key = |c| navigate_key(&press(Key::Char(c), Mods::NONE), &live);
+    assert_eq!(key('l'), Some(Navigate::Enter));
+    assert_eq!(key('h'), Some(Navigate::Leave));
+    assert_eq!(key('j'), Some(Navigate::Move(1)));
+    assert_eq!(key('k'), Some(Navigate::Move(-1)));
+    // The old workspace keys and Enter keep working.
+    assert_eq!(
+        navigate_key(&press(Key::ArrowDown, Mods::NONE), &live),
+        Some(Navigate::Move(1))
+    );
+    assert_eq!(
+        navigate_key(&press(Key::Enter, Mods::NONE), &live),
+        Some(Navigate::Accept)
+    );
+}
+
+#[test]
+fn navigate_enter_and_leave_are_bindable_and_win_over_jk() {
+    let live = tree_live("navigate_enter = 'j'\nnavigate_leave = 'k'\n");
+    let key = |c| navigate_key(&press(Key::Char(c), Mods::NONE), &live);
+    assert_eq!(key('j'), Some(Navigate::Enter));
+    assert_eq!(key('k'), Some(Navigate::Leave));
+    assert_eq!(key('l'), None);
+    assert_eq!(key('h'), None);
+}
+
 #[test]
 fn armed_survives_releases_and_swallows_the_action_tail() {
     let live = live();

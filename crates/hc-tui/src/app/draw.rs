@@ -101,7 +101,7 @@ pub fn draw(app: &mut App, frame: &mut ratatui::Frame, _now: Instant) {
         sidebar_section_split: app.shell_state.sidebar_section_split,
         tab_drag_insert_index: app.tab_drag_index,
         selected_workspace_id: app.navigate_target.as_ref(),
-        navigate_agent: None,
+        navigate_agent: app.navigate_agent.as_deref(),
         reveal_navigation_workspace: &mut app.shell_state.reveal_navigation_workspace,
         dragged_workspace_id: None,
         workspace_drop_indicator_row: None,

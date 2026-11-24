@@ -130,6 +130,7 @@ impl App {
             shell,
             projection,
             navigate_target: None,
+            navigate_agent: None,
             shell_state: ShellState {
                 collapsed_groups,
                 remote_collapsed_groups,

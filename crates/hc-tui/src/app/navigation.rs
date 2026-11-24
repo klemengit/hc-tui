@@ -52,10 +52,39 @@ impl App {
         // Refresh first so a focus set without a publish still
         // resolves (finding 12).
         self.refresh_projection();
+        self.navigate_agent = None;
         self.navigate_target = crate::chrome::navigate::focused_navigation_target(
             &self.projection.endpoints,
             &self.projection.active_endpoint_id,
         );
+    }
+
+    /// Tree navigation is on and the sidebar can show it: the expanded
+    /// desktop sidebar. Mobile and the collapsed sidebar keep the flat walk.
+    fn tree_navigation(&self) -> bool {
+        let mobile = self.area.0 <= self.shell.mobile_width_threshold;
+        self.live.keybinds.navigate.tree && !mobile && !self.shell_state.sidebar_collapsed
+    }
+
+    /// Every agent of the highlighted space (idle ones included) in the
+    /// order the sidebar lists them: the rows the cursor can enter.
+    fn navigate_space_agents(&self) -> Vec<String> {
+        let Some(target) = self.navigate_target.as_ref() else {
+            return Vec::new();
+        };
+        self.projection
+            .endpoints
+            .iter()
+            .find(|endpoint| endpoint.endpoint_id == target.endpoint_id)
+            .and_then(|endpoint| endpoint.snapshot.as_deref())
+            .map(|snapshot| {
+                crate::chrome::space_agents::space_agent_pane_ids(
+                    snapshot,
+                    &target.workspace_id,
+                    crate::config::SpaceAgentsConfig::All,
+                )
+            })
+            .unwrap_or_default()
     }
 
     /// The workspace-navigation targets across all online endpoints —
@@ -183,6 +212,54 @@ impl App {
         use input::Navigate::*;
         let mobile = self.area.0 <= self.shell.mobile_width_threshold;
         match nav {
+            Enter if self.tree_navigation() => {
+                if self.navigate_agent.is_none()
+                    && let Some(first) = self.navigate_space_agents().into_iter().next()
+                {
+                    self.navigate_agent = Some(first);
+                    self.shell_state.reveal_navigation_workspace = true;
+                }
+            }
+            Leave if self.tree_navigation() => {
+                if self.navigate_agent.take().is_some() {
+                    self.shell_state.reveal_navigation_workspace = true;
+                }
+            }
+            // Without tree navigation the keys do not exist.
+            Enter | Leave => {}
+            Move(delta) if self.navigate_agent.is_some() => {
+                let agents = self.navigate_space_agents();
+                let current = agents
+                    .iter()
+                    .position(|pane| Some(pane) == self.navigate_agent.as_ref());
+                if !agents.is_empty() {
+                    let len = agents.len() as isize;
+                    let next = match current {
+                        Some(index) => (index as isize + delta as isize).rem_euclid(len),
+                        None => 0,
+                    };
+                    self.navigate_agent = Some(agents[next as usize].clone());
+                    self.shell_state.reveal_navigation_workspace = true;
+                }
+            }
+            Accept if self.navigate_agent.is_some() => {
+                let pane = self.navigate_agent.take();
+                let valid = self
+                    .navigate_space_agents()
+                    .into_iter()
+                    .any(|candidate| Some(&candidate) == pane.as_ref());
+                if let (true, Some(pane)) = (valid, pane) {
+                    self.navigate_target = None;
+                    self.mode = Mode::Normal;
+                    self.focus_pane(pane);
+                } else {
+                    // The agent went away while the cursor was on it.
+                    self.show_notice(
+                        "Agent unavailable",
+                        "That agent is gone; the cursor is back on its space",
+                    );
+                }
+            }
             Move(delta) => {
                 let mut targets = self.navigate_targets();
                 if let Some(index) = crate::chrome::navigate::move_index(
@@ -221,6 +298,7 @@ impl App {
                         self.mark_active_seen();
                     }
                     self.navigate_target = None;
+                    self.navigate_agent = None;
                     self.mode = Mode::Normal;
                 }
             }
@@ -249,10 +327,12 @@ impl App {
                     self.mark_active_seen();
                 }
                 self.navigate_target = None;
+                self.navigate_agent = None;
                 self.mode = Mode::Normal;
             }
             Cancel => {
                 self.navigate_target = None;
+                self.navigate_agent = None;
                 self.focused = self.before_navigate.clone();
                 self.mode = Mode::Normal;
             }
@@ -316,6 +396,7 @@ impl App {
             T::NewTab => {
                 self.mode = Mode::Normal;
                 self.navigate_target = None;
+                self.navigate_agent = None;
                 self.new_tab();
                 None
             }
@@ -333,6 +414,7 @@ impl App {
             self.refresh_projection();
             self.mark_active_seen();
             self.navigate_target = None;
+            self.navigate_agent = None;
             self.mode = Mode::Normal;
             self.sync_target();
         }
@@ -350,6 +432,7 @@ impl App {
             if self.projection.snapshot.focused_workspace_id.is_some() {
                 self.mode = Mode::Normal;
                 self.navigate_target = None;
+                self.navigate_agent = None;
             } else {
                 self.mode = Mode::Navigate;
             }
