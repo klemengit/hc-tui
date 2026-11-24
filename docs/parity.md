@@ -788,6 +788,10 @@ Everything else on the compared surfaces still diffs normally.
   The default `"none"` draws the reference's spaces list. It works on the
   single-machine and multi-machine sidebars; a collapsed machine shows no
   children.
+- **Frame around a lone pane.** As in the reference, `[ui] pane_borders =
+  "auto"` (the default) draws no frame for a tab with one pane, whatever
+  `pane_outer_borders` and `pane_gaps` say. `pane_borders = "always"` frames
+  it too (`pane_outer_borders = false` then drops the outer edge again).
 - **Tree navigation.** Opt-in: with `[keys] navigate_tree = true`, navigate
   mode adds `navigate_enter` (`l`) and `navigate_leave` (`h`) and treats
   `navigate_pane_down` / `_up` (`j` / `k`) as extra down/up keys. `l` opens

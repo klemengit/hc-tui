@@ -278,3 +278,31 @@ pub(crate) fn add_split_border_cells(
         }
     }
 }
+
+#[cfg(test)]
+mod lone_pane_border_tests {
+    use super::*;
+
+    fn lone() -> Vec<PaneInfo> {
+        vec![PaneInfo {
+            id: "t1".into(),
+            rect: ratatui::layout::Rect::new(0, 0, 40, 10),
+            borders: Borders::NONE,
+            is_focused: true,
+        }]
+    }
+
+    #[test]
+    fn a_lone_pane_is_framed_only_with_pane_borders_always() {
+        let borders = |mode| apply_pane_chrome(lone(), mode, true, true)[0].borders;
+        assert_eq!(borders(PaneBordersConfig::Auto), Borders::NONE);
+        assert_eq!(borders(PaneBordersConfig::Off), Borders::NONE);
+        assert_eq!(borders(PaneBordersConfig::Always), Borders::ALL);
+    }
+
+    #[test]
+    fn outer_borders_off_removes_the_frame_of_a_lone_pane_again() {
+        let panes = apply_pane_chrome(lone(), PaneBordersConfig::Always, true, false);
+        assert_eq!(panes[0].borders, Borders::NONE);
+    }
+}
