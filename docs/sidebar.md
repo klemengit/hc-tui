@@ -207,7 +207,7 @@ with the collapsed sidebar navigate mode stays flat.
 | Key | Default | Effect |
 |---|---|---|
 | `[keys] navigate_tree` | `false` | Turns tree navigation on. |
-| `[keys] navigate_enter` | `"l"` | Moves the cursor from the space into its agents. The space lists all its agents, idle ones included, while the cursor is inside, even with `agents = "none"`. Does nothing for a space without agents. |
+| `[keys] navigate_enter` | `"l"` | Moves the cursor from the space into its agents. The space lists all its agents, idle ones included, while the cursor is inside, even with `agents = "none"`. Does nothing for a space without agents. Pressed again on an agent row, it does what `enter` does: focuses that agent and leaves navigate mode. |
 | `[keys] navigate_leave` | `"h"` | Moves the cursor back to the space. The idle agents hide again. |
 | `[keys] navigate_next_machine` | `"shift+j"` | Jumps to the first space of the next machine. |
 | `[keys] navigate_prev_machine` | `"shift+k"` | Jumps to the first space of the current machine; when the cursor is already there, to the first space of the previous machine (like a paragraph motion in vim). |

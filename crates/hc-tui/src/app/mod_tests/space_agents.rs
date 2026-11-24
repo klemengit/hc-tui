@@ -475,3 +475,16 @@ async fn the_agent_count_token_renders_nothing_for_a_space_without_agents() {
     assert!(one.contains("one · 1"), "{one}");
     assert!(!empty.contains('·') && !empty.contains('0'), "{empty}");
 }
+#[tokio::test]
+async fn the_open_key_on_an_agent_focuses_it_like_enter() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    press_key(&mut app, 'l');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t2"));
+    press_key(&mut app, 'j');
+    // `l` again, now inside the space.
+    press_key(&mut app, 'l');
+    assert_eq!(app.focused.as_deref(), Some("t1"));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.navigate_agent.is_none());
+    assert!(app.navigate_target.is_none());
+}

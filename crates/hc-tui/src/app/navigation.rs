@@ -212,6 +212,11 @@ impl App {
         use input::Navigate::*;
         let mobile = self.area.0 <= self.shell.mobile_width_threshold;
         match nav {
+            // Inside a space the open key does what Enter does: focus the agent.
+            Enter if self.tree_navigation() && self.navigate_agent.is_some() => {
+                self.on_navigate(Accept);
+                return;
+            }
             Enter if self.tree_navigation() => {
                 if self.navigate_agent.is_none()
                     && let Some(first) = self.navigate_space_agents().into_iter().next()
