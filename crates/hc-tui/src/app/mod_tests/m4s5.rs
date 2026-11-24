@@ -17,6 +17,7 @@ fn key(app: &mut App, key: Key) {
 
 fn command(action: CustomCommandAction, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         bindings: Default::default(),
         label: "alt+f".into(),
         command: line.into(),
@@ -120,6 +121,7 @@ async fn popup_eats_keys_and_terminal_loss_closes_with_a_kill() {
         core.reply(&kill["id"], json!({})).await;
     });
     app.popup_pending = Some(super::super::popup::PopupPending {
+        layout: Default::default(),
         width: Some(PopupSize::Percent(80)),
         height: Some(PopupSize::Percent(80)),
         persistent: false,
@@ -157,6 +159,7 @@ async fn paste_to_popup_uses_the_terminals_paste_mode() {
     app.view.inventory_mut().replace(1, vec![t9]);
     app.reconcile_published_view();
     app.popup_pending = Some(super::super::popup::PopupPending {
+        layout: Default::default(),
         width: Some(PopupSize::Percent(80)),
         height: Some(PopupSize::Percent(80)),
         persistent: false,

@@ -12,6 +12,7 @@ use std::collections::BTreeMap;
 
 fn command(action: CustomCommandAction, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         bindings: Default::default(),
         label: "alt+h".into(),
         command: line.into(),

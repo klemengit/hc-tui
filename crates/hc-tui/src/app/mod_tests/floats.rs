@@ -11,6 +11,7 @@ use std::time::Duration;
 
 pub(super) fn command_labeled(label: &str, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         bindings: Default::default(),
         label: label.into(),
         command: line.into(),
@@ -28,6 +29,7 @@ pub(super) fn command(line: &str) -> CustomCommandKeybind {
 
 pub(super) fn ephemeral(line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         label: "alt+h".into(),
         persistent: false,
         ..command(line)

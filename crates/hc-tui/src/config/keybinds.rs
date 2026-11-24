@@ -325,6 +325,8 @@ pub struct CustomCommandKeybind {
     /// hide/show instead of a modal one-shot. Resolved from the optional
     /// `persistent` key or the interactive-shell heuristic.
     pub persistent: bool,
+    /// hc-tui only: placement and frame of an ephemeral popup.
+    pub layout: crate::popup_size::PopupLayout,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

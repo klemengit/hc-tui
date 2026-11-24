@@ -10,6 +10,7 @@ use ratatui::widgets::Widget;
 
 fn command_labeled(label: &str, persistent: bool) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         bindings: Default::default(),
         label: label.into(),
         command: "exec \"${SHELL:-sh}\"".into(),

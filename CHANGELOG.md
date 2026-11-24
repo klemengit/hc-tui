@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[[keys.command]]` popups: `placement = "pane"` (default `"center"`) covers
+  exactly the focused pane's terminal grid, and `border = false` (default
+  `true`) drops the frame and title. With `placement = "pane"`, `width` and
+  `height` are ignored with a diagnostic. Not for persistent floats.
 - Custom commands (`[[keys.command]]`, all types and persistent floats) get
   `HC_FOCUSED_TERMINAL`, `HC_FOCUSED_MACHINE`, `HC_FOCUSED_SPACE` and
   `HC_FOCUSED_TAB`: the terminal that had focus when the key was pressed.

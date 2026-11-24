@@ -21,6 +21,11 @@ pub struct CommandKeybindConfig {
     /// Per-tab persistent float when type = "popup". Unset resolves to
     /// `popup_command_is_shell` at registration.
     pub persistent: Option<bool>,
+    /// hc-tui only, popup: "center" (default) or "pane" (cover the focused
+    /// pane's terminal area).
+    pub placement: Option<String>,
+    /// hc-tui only, popup: `false` drops the frame and title.
+    pub border: Option<bool>,
 }
 
 impl CommandKeybindConfig {}
@@ -35,6 +40,8 @@ impl Default for CommandKeybindConfig {
             width: None,
             height: None,
             persistent: None,
+            placement: None,
+            border: None,
         }
     }
 }

@@ -10,6 +10,7 @@ use hc_vt::{Action as KeyAction, Key, Mods};
 
 fn command_labeled(label: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
+        layout: Default::default(),
         bindings: Default::default(),
         label: label.into(),
         command: "exec \"${SHELL:-sh}\"".into(),

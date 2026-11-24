@@ -380,3 +380,58 @@ fn displaced_bom_is_recovered_and_string_bom_is_preserved() {
         Some("tokyo-\u{feff}night")
     );
 }
+
+#[test]
+fn popup_placement_and_border_parse_with_defaults_unchanged() {
+    use crate::popup_size::{PopupLayout, PopupPlacement};
+    let layouts = |text: &str| {
+        let loaded = load_text(text);
+        let (live, mut diagnostics) = loaded.config.live_keybinds_with_diagnostics().unwrap();
+        diagnostics.extend(loaded.diagnostics);
+        let layouts: Vec<_> = live
+            .keybinds
+            .custom_commands
+            .iter()
+            .map(|command| (command.layout, command.width.is_some()))
+            .collect();
+        (layouts, diagnostics)
+    };
+    let entry = |extra: &str| {
+        format!("[[keys.command]]\nkey = 'alt+h'\ntype = 'popup'\ncommand = 'htop'\n{extra}\n")
+    };
+    let (plain, diagnostics) = layouts(&entry(""));
+    assert_eq!(plain, vec![(PopupLayout::default(), false)]);
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+
+    let (pane, diagnostics) = layouts(&entry("placement = 'pane'\nborder = false"));
+    assert_eq!(
+        pane,
+        vec![(
+            PopupLayout {
+                placement: PopupPlacement::Pane,
+                border: false
+            },
+            false
+        )]
+    );
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+
+    // width/height are ignored with a diagnostic under placement = "pane".
+    let (sized, diagnostics) = layouts(&entry("placement = 'pane'\nwidth = '50%'"));
+    assert_eq!(sized[0].0.placement, PopupPlacement::Pane);
+    assert!(!sized[0].1);
+    assert!(
+        diagnostics.iter().any(|d| d.contains("placement")),
+        "{diagnostics:?}"
+    );
+
+    // A bad value, a persistent float and a non-popup all keep the default.
+    for extra in [
+        "placement = 'left'",
+        "persistent = true\nplacement = 'pane'",
+    ] {
+        let (kept, diagnostics) = layouts(&entry(extra));
+        assert_eq!(kept[0].0, PopupLayout::default(), "{extra}");
+        assert!(!diagnostics.is_empty(), "{extra}");
+    }
+}

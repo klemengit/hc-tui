@@ -10,7 +10,7 @@ use super::*;
 use crate::app::creation::program_env;
 use crate::config::{CustomCommandAction, CustomCommandKeybind};
 use crate::operations::Action;
-use crate::popup_size::{PopupSize, resolve_popup_geometry};
+use crate::popup_size::{PopupLayout, PopupSize, resolve_popup_geometry, resolve_popup_layout};
 use ratatui::layout::Rect;
 use std::collections::BTreeMap;
 
@@ -37,6 +37,7 @@ pub(super) struct PopupState {
     pub terminal: String,
     pub width: Option<PopupSize>,
     pub height: Option<PopupSize>,
+    pub layout: PopupLayout,
     /// Tab the popup was opened over; a focus change dismisses it.
     /// Ephemeral popups only — a persistent float's qualified owner
     /// lives in `key`, so this is `None` there.
@@ -60,6 +61,7 @@ pub(super) struct PopupState {
 pub(super) struct PopupPending {
     pub width: Option<PopupSize>,
     pub height: Option<PopupSize>,
+    pub layout: PopupLayout,
     /// Persistent floats bind their owning tab at request time, so an
     /// `Outcome::Ran` landing after a switch never adopts the new tab.
     pub persistent: bool,
@@ -166,7 +168,7 @@ impl App {
             // ephemeral popup dies to make room.
             self.dismiss_popup();
         }
-        let geometry = resolve_popup_geometry(command.width, command.height, self.frame_area());
+        let geometry = self.popup_geometry(command.width, command.height, command.layout);
         let mut params = hc_proto::terminal::RunParams {
             line: Some(command.command.clone()),
             rm: true,
@@ -198,6 +200,7 @@ impl App {
         self.popup_pending = Some(PopupPending {
             width: command.width,
             height: command.height,
+            layout: command.layout,
             persistent: false,
             owner: String::new(),
             command: String::new(),
@@ -244,8 +247,7 @@ impl App {
             role: Role::Active,
         }));
         pane.on_view(&self.view);
-        let area = self.frame_area();
-        if let Some(geometry) = resolve_popup_geometry(pending.width, pending.height, area) {
+        if let Some(geometry) = self.popup_geometry(pending.width, pending.height, pending.layout) {
             popup_fit(&mut pane, geometry);
         }
         self.popup = Some(PopupState {
@@ -253,6 +255,7 @@ impl App {
             terminal,
             width: pending.width,
             height: pending.height,
+            layout: pending.layout,
             owner_tab: self.projection.snapshot.focused_tab_id.clone(),
             persistent: false,
             key: None,
@@ -264,6 +267,20 @@ impl App {
     /// The surface rectangle the popup resolves against: the pane surface
     /// (right of the sidebar, under the tab bar) — the reference's
     /// `layout.pane_surface` in `composition.rs`.
+    /// The popup rect under `layout`. `placement = "pane"` follows the
+    /// focused pane's terminal grid (borders, gaps and scrollbar gutter
+    /// already taken off), so it tracks layout changes while open.
+    pub(super) fn popup_geometry(
+        &self,
+        width: Option<PopupSize>,
+        height: Option<PopupSize>,
+        layout: PopupLayout,
+    ) -> Option<crate::popup_size::PopupResolvedGeometry> {
+        let pane = (layout.placement == crate::popup_size::PopupPlacement::Pane)
+            .then(|| super::pane_geometry::focused_pane_inner(self, self.area.0, self.area.1));
+        resolve_popup_layout(width, height, layout, self.frame_area(), pane)
+    }
+
     pub(super) fn frame_area(&self) -> Rect {
         self.shell
             .layout_config()
@@ -412,8 +429,9 @@ impl App {
     pub(super) fn popup_resize(&mut self) {
         self.popup_selection = None;
         let area = self.frame_area();
-        if let Some(popup) = self.popup.as_mut()
-            && let Some(geometry) = resolve_popup_geometry(popup.width, popup.height, area)
+        if let Some(popup) = self.popup.as_ref()
+            && let Some(geometry) = self.popup_geometry(popup.width, popup.height, popup.layout)
+            && let Some(popup) = self.popup.as_mut()
         {
             popup_fit(&mut popup.pane, geometry);
         }
@@ -629,16 +647,48 @@ impl App {
         let Some(geometry) = self
             .popup
             .as_ref()
-            .and_then(|p| resolve_popup_geometry(p.width, p.height, self.frame_area()))
+            .and_then(|p| self.popup_geometry(p.width, p.height, p.layout))
         else {
             return;
         };
         let persistent = self.popup.as_ref().is_some_and(|p| p.persistent);
+        let framed = self.popup.as_ref().is_none_or(|p| p.layout.border);
+        if let Some(popup) = self.popup.as_mut() {
+            // Cheap and idempotent: a pane-placed popup follows layout
+            // changes between host resizes.
+            popup_fit(&mut popup.pane, geometry);
+        }
         if persistent {
             // The persistent float dresses the frame its size deserves:
             // dimmed backdrop, drop shadow, then the rounded block.
             self.dim_float_backdrop(buf);
             self.draw_float_shadow(buf, geometry.outer);
+        }
+        if !framed {
+            Clear.render(geometry.outer, buf);
+            let Some(popup) = self.popup.as_mut() else {
+                return;
+            };
+            let surface = geometry.inner;
+            let wish = super::draw::draw_terminal(&mut popup.pane, surface, buf, now, false);
+            for cell in &mut buf.content {
+                cell.modifier = Modifier::from_bits_truncate(cell.modifier.bits() & !0xf000);
+            }
+            let popup_terminal = popup.terminal.clone();
+            self.hit_map.popup = Some(crate::chrome::render::PaneHit {
+                rect: surface,
+                inner_rect: surface,
+                scrollbar_rect: None,
+                scroll: None,
+                pane_id: popup_terminal,
+            });
+            self.render_popup_selection(buf, surface);
+            self.want_cursor = super::draw::CursorWish {
+                pos: wish.pos.map(|(x, y)| (surface.x + x, surface.y + y)),
+                anchor: wish.anchor.map(|(x, y)| (surface.x + x, surface.y + y)),
+                ..wish
+            };
+            return;
         }
         Clear.render(geometry.outer, buf);
         let block = if persistent {

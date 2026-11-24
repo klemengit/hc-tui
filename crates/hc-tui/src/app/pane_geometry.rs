@@ -127,6 +127,12 @@ pub(super) fn inner_for(
 }
 
 pub(crate) fn pane_inner(app: &mut App, cols: u16, rows: u16) -> Rect {
+    focused_pane_inner(app, cols, rows)
+}
+
+/// The focused pane's terminal grid in frame cells: the pane rect minus
+/// its borders and scrollbar gutter.
+pub(super) fn focused_pane_inner(app: &App, cols: u16, rows: u16) -> Rect {
     let layout = app.shell.layout_config().layout(
         cols,
         rows,

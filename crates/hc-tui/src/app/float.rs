@@ -172,6 +172,7 @@ impl App {
             });
         }
         self.popup_pending = Some(super::popup::PopupPending {
+            layout: Default::default(),
             width: command.width,
             height: command.height,
             persistent: true,
@@ -261,6 +262,7 @@ impl App {
             popup_fit(&mut pane, geometry);
         }
         self.popup = Some(PopupState {
+            layout: Default::default(),
             pane,
             terminal: entry.terminal,
             width: entry.width,
@@ -301,6 +303,7 @@ impl App {
             }
         }
         self.popup = Some(PopupState {
+            layout: Default::default(),
             pane,
             terminal,
             width,

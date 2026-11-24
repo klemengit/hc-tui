@@ -150,6 +150,16 @@ height = "80%"
 `width` and `height` take a percentage or a number of cells. While the popup is open, every key goes to it, including
 `Esc`.
 
+hc-tui only: `placement = "pane"` (default `"center"`) makes a popup cover exactly the focused pane, so a program in
+it can redraw the pane's screen and look like an in-place overlay. `border = false` (default `true`) drops the frame,
+title and shadow, so the terminal fills the whole popup. With `placement = "pane"`, `width` and `height` are ignored
+(with a diagnostic). Both options apply to one-shot popups only; a persistent float ignores them (with a diagnostic).
+
+The popup terminal gets the same columns and rows as the pane's terminal grid, and its top-left cell is the pane's: the
+pane rect minus its border (`pane_borders`, `pane_outer_borders`, `pane_gaps`) and minus the scrollbar column when
+`pane_scrollbars` shows one. It follows the pane if the layout changes while it is open. While it is open, every key
+goes to it; when it closes, focus is still on the pane.
+
 A popup that just runs an interactive shell — like the `Alt+F` example above — is a *persistent float* per tab: press the
 key again to hide it, press it once more to bring it back. Leaving the tab hides it too, but the program keeps running
 and coming back shows it again if it was open when you left. It starts in the project directory of the tab it belongs

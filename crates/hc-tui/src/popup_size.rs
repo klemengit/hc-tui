@@ -58,6 +58,68 @@ pub struct PopupResolvedGeometry {
     pub terminal_rows: u16,
 }
 
+/// Where a `[[keys.command]]` popup goes: `Center` is the sized, framed
+/// popup in the middle of the pane area; `Pane` covers exactly the focused
+/// pane's terminal grid.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PopupPlacement {
+    #[default]
+    Center,
+    Pane,
+}
+
+/// The opt-in look of an ephemeral popup. The default is today's.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PopupLayout {
+    pub placement: PopupPlacement,
+    /// `false` drops the frame and title: the terminal fills the outer rect.
+    pub border: bool,
+}
+
+impl Default for PopupLayout {
+    fn default() -> Self {
+        Self {
+            placement: PopupPlacement::Center,
+            border: true,
+        }
+    }
+}
+
+/// Resolve a popup's geometry under `layout`. `pane` is the focused pane's
+/// terminal rect, used by `PopupPlacement::Pane`: the popup terminal then
+/// has exactly that rect's columns and rows and the same top-left cell.
+pub fn resolve_popup_layout(
+    width: Option<PopupSize>,
+    height: Option<PopupSize>,
+    layout: PopupLayout,
+    area: ratatui::layout::Rect,
+    pane: Option<ratatui::layout::Rect>,
+) -> Option<PopupResolvedGeometry> {
+    match layout.placement {
+        PopupPlacement::Pane => {
+            let rect = pane.filter(|rect| rect.width > 0 && rect.height > 0)?;
+            Some(PopupResolvedGeometry {
+                outer: rect,
+                inner: rect,
+                terminal_cols: rect.width,
+                terminal_rows: rect.height,
+            })
+        }
+        PopupPlacement::Center => {
+            let geometry = resolve_popup_geometry(width, height, area)?;
+            if layout.border {
+                return Some(geometry);
+            }
+            Some(PopupResolvedGeometry {
+                outer: geometry.outer,
+                inner: geometry.outer,
+                terminal_cols: geometry.outer.width,
+                terminal_rows: geometry.outer.height,
+            })
+        }
+    }
+}
+
 pub const MIN_POPUP_WIDTH: u16 = 6;
 pub const MIN_POPUP_HEIGHT: u16 = 4;
 

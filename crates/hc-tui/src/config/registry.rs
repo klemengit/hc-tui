@@ -435,6 +435,38 @@ fn append_custom_command_bindings(
                 .persistent
                 .unwrap_or_else(|| shell_command::popup_command_is_shell(&command.command));
         }
+        let mut layout = crate::popup_size::PopupLayout::default();
+        if action != CustomCommandAction::Popup {
+            if command.placement.is_some() || command.border.is_some() {
+                diagnostics.push(format!(
+                    "placement/border on non-popup custom command: keys.command[{index}]; ignoring them"
+                ));
+            }
+        } else if persistent {
+            if command.placement.is_some() || command.border.is_some() {
+                diagnostics.push(format!(
+                    "placement/border on a persistent float: keys.command[{index}]; ignoring them"
+                ));
+            }
+        } else {
+            match command.placement.as_deref() {
+                None | Some("center") => {}
+                Some("pane") => {
+                    layout.placement = crate::popup_size::PopupPlacement::Pane;
+                    if width.is_some() || height.is_some() {
+                        diagnostics.push(format!(
+                            "width/height with placement = \"pane\": keys.command[{index}]; ignoring width and height"
+                        ));
+                        width = None;
+                        height = None;
+                    }
+                }
+                Some(other) => diagnostics.push(format!(
+                    "invalid placement {other:?} on keys.command[{index}]; expected \"center\" or \"pane\""
+                )),
+            }
+            layout.border = command.border.unwrap_or(true);
+        }
         let label = bindings.label().unwrap_or_else(|| "unset".to_string());
         keybinds.custom_commands.push(CustomCommandKeybind {
             bindings,
@@ -445,6 +477,7 @@ fn append_custom_command_bindings(
             width,
             height,
             persistent,
+            layout,
         });
     }
 }

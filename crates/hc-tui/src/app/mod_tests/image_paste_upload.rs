@@ -90,6 +90,7 @@ async fn popup_terminal_is_the_target() {
         role: pane::Role::Active,
     }));
     app.popup = Some(popup::PopupState {
+        layout: Default::default(),
         pane: popup_pane,
         terminal: "t9".into(),
         width: None,
