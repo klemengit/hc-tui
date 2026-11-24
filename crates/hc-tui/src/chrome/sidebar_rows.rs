@@ -99,6 +99,52 @@ pub(crate) fn workspace_entries(
     entries
 }
 
+/// One row of the single-machine spaces list: a space, or (with
+/// `[ui.sidebar.spaces] agents`) an agent listed under the space above it.
+pub(crate) enum ListRow {
+    Workspace(WorkspaceEntry),
+    Agent {
+        row: crate::chrome::space_agents::SpaceAgentRow,
+        workspace_indented: bool,
+    },
+}
+
+/// The spaces list: every entry, each followed by the agents it lists.
+pub(crate) fn list_rows(
+    snapshot: &ClientShellSnapshot,
+    entries: &[WorkspaceEntry],
+    config: &crate::chrome::ClientShellConfig,
+    state: &ShellRenderState<'_>,
+) -> Vec<ListRow> {
+    let mut rows = Vec::new();
+    for entry in entries {
+        rows.push(ListRow::Workspace(*entry));
+        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
+            continue;
+        };
+        let inside = state.navigate_agent.is_some()
+            && state.selected_workspace_id.is_some_and(|target| {
+                target.matches(state.active_endpoint_id, &workspace.workspace_id)
+            });
+        rows.extend(
+            crate::chrome::space_agents::space_agent_rows(
+                snapshot,
+                &workspace.workspace_id,
+                crate::chrome::space_agents::effective_filter(config.spaces.agents, inside),
+                state.navigate_agent,
+                config,
+                None,
+            )
+            .into_iter()
+            .map(|row| ListRow::Agent {
+                row,
+                workspace_indented: entry.indented,
+            }),
+        );
+    }
+    rows
+}
+
 pub(crate) fn parent_group_key(snapshot: &ClientShellSnapshot, index: usize) -> Option<String> {
     let workspace = snapshot.workspaces.get(index)?;
     let worktree = workspace.worktree.as_ref()?;

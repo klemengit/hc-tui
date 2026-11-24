@@ -183,6 +183,7 @@ the same `config.toml` reports them as unknown keys.
 
 | Key | Default | Effect |
 |---|---|---|
+| `[ui.sidebar.spaces] agents` | `"none"` | Lists agents as indented rows under their space: `"none"` lists nothing, `"active"` lists the space's agents that are not idle or unknown (working, waiting, done, blocked), `"all"` lists every agent. A row uses the `[ui.sidebar.agents]` row layout and tokens. Rows are ordered like the agents panel's priority view. With several machines each machine lists its own agents; a collapsed machine lists none. A click on a row focuses the agent. |
 | `[ui] agent_panel` | `true` | `false` hides the agents panel. The spaces list takes the whole sidebar height and the section divider disappears. Agent next/previous and the agent shortcuts keep working. The collapsed sidebar drops its agent icons too. The mobile switcher is not affected. |
 
 ## Machines, selection and geometry

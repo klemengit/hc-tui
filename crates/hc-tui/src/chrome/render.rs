@@ -78,6 +78,8 @@ pub(crate) struct ShellHitMap {
     pub pane_splits: Vec<crate::app::layout_mouse::SplitHit>,
     pub agents: Vec<(Rect, String)>,
     pub endpoint_agents: Vec<(Rect, ClientEndpointId, String)>,
+    /// Agent rows listed under their space (`[ui.sidebar.spaces] agents`).
+    pub space_agents: Vec<(Rect, ClientEndpointId, String)>,
     pub agent_body: Rect,
     pub agent_scrollbar: Rect,
     pub agent_scroll_metrics: Option<ScrollMetrics>,
@@ -139,6 +141,9 @@ pub(crate) struct ShellRenderState<'a> {
     pub sidebar_section_split: f32,
     pub tab_drag_insert_index: Option<usize>,
     pub selected_workspace_id: Option<&'a WorkspaceNavigationTarget>,
+    /// Tree navigation: the agent under the cursor inside the selected
+    /// space (`[keys] navigate_tree`). `None` when the cursor is on a space.
+    pub navigate_agent: Option<&'a str>,
     pub reveal_navigation_workspace: &'a mut bool,
     pub dragged_workspace_id: Option<&'a str>,
     pub workspace_drop_indicator_row: Option<u16>,
@@ -242,6 +247,7 @@ pub(crate) fn render_shell(
         hits.workspaces.clear();
         hits.agents.clear();
         hits.endpoint_agents.clear();
+        hits.space_agents.clear();
         hits.tab_scroll_left = Rect::default();
         hits.tab_scroll_right = Rect::default();
         hits.new_tab = Rect::default();

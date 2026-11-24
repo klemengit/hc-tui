@@ -24,6 +24,9 @@ All notable changes to hc-tui are documented here. The format follows
 
 - `[ui] agent_panel` (default `true`): `false` hides the agents panel so the
   spaces list takes the whole sidebar height.
+- `[ui.sidebar.spaces] agents` (default `"none"`): `"active"` or `"all"` lists
+  each space's agents as indented rows under it, using the
+  `[ui.sidebar.agents]` row layout.
 
 ## 0.1.19 — 2026-11-24
 

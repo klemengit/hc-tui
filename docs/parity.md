@@ -781,6 +781,13 @@ Everything else on the compared surfaces still diffs normally.
   machines added (`hc machine add`), each machine's spaces get their own
   headers without naming the machine, so a space of the same name on two
   machines heads two groups.
+- **Agents under their space.** Opt-in: `[ui.sidebar.spaces] agents =
+  "active"` (or `"all"`) draws the space's agents as indented child rows
+  under its row, drawn with the `[ui.sidebar.agents]` rows, in the agents
+  panel's priority order. `"active"` leaves out idle and unknown agents.
+  The default `"none"` draws the reference's spaces list. It works on the
+  single-machine and multi-machine sidebars; a collapsed machine shows no
+  children.
 - **Optional agents panel.** Opt-in: with `[ui] agent_panel = false` the
   spaces list takes the whole sidebar height and the agents panel, its
   header and the section divider are not drawn (the collapsed sidebar loses

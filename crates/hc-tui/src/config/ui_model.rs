@@ -18,6 +18,20 @@ pub enum AgentPanelSortConfig {
     Priority,
 }
 
+/// Which agents `[ui.sidebar.spaces] agents` lists under their space row.
+/// hc-tui's own key; `none` is the herdr layout.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SpaceAgentsConfig {
+    /// No agent rows under spaces.
+    #[default]
+    None,
+    /// Agents whose status is working, waiting, done or blocked.
+    Active,
+    /// Every agent, idle ones included.
+    All,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusIndicatorStyle {

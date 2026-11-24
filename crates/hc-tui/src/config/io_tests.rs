@@ -75,6 +75,62 @@ fn agent_panel_defaults_on_and_loads_without_unknown_key_diagnostics() {
 }
 
 #[test]
+fn spaces_agents_defaults_to_none_and_parses_each_value() {
+    use crate::config::{SpaceAgentsConfig, SpacesSidebarConfig};
+    assert_eq!(
+        SpacesSidebarConfig::default().agents,
+        SpaceAgentsConfig::None
+    );
+    let loaded = load_text("[ui]\nsidebar_width = 30\n");
+    assert_eq!(
+        loaded.config.ui.sidebar.spaces.agents,
+        SpaceAgentsConfig::None
+    );
+    for (value, expected) in [
+        ("none", SpaceAgentsConfig::None),
+        ("active", SpaceAgentsConfig::Active),
+        ("all", SpaceAgentsConfig::All),
+    ] {
+        let loaded = load_text(&format!("[ui.sidebar.spaces]\nagents = '{value}'\n"));
+        assert_eq!(loaded.config.ui.sidebar.spaces.agents, expected, "{value}");
+        assert!(
+            loaded.diagnostics.is_empty(),
+            "unexpected diagnostics: {:?}",
+            loaded.diagnostics
+        );
+    }
+}
+
+#[test]
+fn spaces_agents_keeps_the_other_spaces_keys() {
+    let loaded = load_text(
+        "[ui.sidebar.spaces]\nagents = 'active'\nrow_gap = 1\nrows = [['state_icon', 'workspace']]\n",
+    );
+    let spaces = &loaded.config.ui.sidebar.spaces;
+    assert_eq!(spaces.agents, crate::config::SpaceAgentsConfig::Active);
+    assert_eq!(spaces.row_gap, 1);
+    assert_eq!(spaces.rows.len(), 1);
+    assert!(loaded.diagnostics.is_empty());
+}
+
+#[test]
+fn an_unknown_spaces_agents_value_is_a_config_error() {
+    let loaded = load_text("[ui.sidebar.spaces]\nagents = 'some'\n");
+    assert_eq!(
+        loaded.config.ui.sidebar.spaces.agents,
+        crate::config::SpaceAgentsConfig::None
+    );
+    assert!(
+        loaded
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.starts_with("config parse error")),
+        "{:?}",
+        loaded.diagnostics
+    );
+}
+
+#[test]
 fn herdr_only_experimental_keys_are_accepted_and_ignored() {
     let loaded = load_text("[experimental]\npane_history = true\n");
     assert!(loaded.diagnostics.is_empty());

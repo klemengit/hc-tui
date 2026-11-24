@@ -172,6 +172,14 @@ impl App {
             });
             return;
         }
+        if let Some((_, _, pane_id)) = hits
+            .space_agents
+            .iter()
+            .find(|(rect, _, _)| contains(*rect, point))
+        {
+            self.focus_pane(pane_id.clone());
+            return;
+        }
         if let Some((_, endpoint_id, pane_id)) = hits
             .endpoint_agents
             .iter()

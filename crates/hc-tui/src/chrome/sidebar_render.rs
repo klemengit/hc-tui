@@ -70,6 +70,7 @@ pub(crate) fn render_sidebar(
     );
 
     let entries = workspace_entries(snapshot, state.collapsed_groups);
+    let rows = list_rows(snapshot, &entries, config, state);
     let body = Rect::new(
         workspace_area.x,
         workspace_area.y.saturating_add(WORKSPACE_HEADER_ROWS),
@@ -79,10 +80,10 @@ pub(crate) fn render_sidebar(
             .saturating_sub(WORKSPACE_HEADER_ROWS + 1),
     );
     hits.workspace_body = body;
-    let row_heights = entries
+    let row_heights = rows
         .iter()
-        .map(|entry| {
-            snapshot
+        .map(|row| match row {
+            ListRow::Workspace(entry) => snapshot
                 .workspaces
                 .get(entry.index)
                 .map(|workspace| {
@@ -96,30 +97,41 @@ pub(crate) fn render_sidebar(
                     .max(1)
                     .min(u16::MAX as usize) as u16
                 })
-                .unwrap_or(1)
+                .unwrap_or(1),
+            ListRow::Agent { row, .. } => row.row.rows.len().max(1).min(u16::MAX as usize) as u16,
         })
         .collect::<Vec<_>>();
-    let gaps = entries
+    let gaps = rows
         .iter()
         .enumerate()
-        .map(|(index, _)| {
-            entries
-                .get(index + 1)
-                .map_or(0, |next| u16::from(!next.indented) * config.spaces.row_gap)
+        .map(|(index, _)| match rows.get(index + 1) {
+            Some(ListRow::Workspace(next)) => u16::from(!next.indented) * config.spaces.row_gap,
+            _ => 0,
         })
         .collect::<Vec<_>>();
-    let mut metrics = super::scroll::list_scroll_metrics(
-        &row_heights,
-        &gaps,
-        body.height,
-        *state.workspace_scroll,
-    );
-    if !body.is_empty()
-        && std::mem::take(state.reveal_focused_workspace)
-        && let Some(target) = entries
-            .iter()
-            .position(|entry| snapshot.workspaces[entry.index].focused)
-    {
+    let reveal_navigation = !body.is_empty() && std::mem::take(state.reveal_navigation_workspace);
+    let reveal_focus = !body.is_empty() && std::mem::take(state.reveal_focused_workspace);
+    let reveal_target = if reveal_navigation && state.selected_workspace_id.is_some() {
+        rows.iter().position(|row| match row {
+            ListRow::Agent { row, .. } if state.navigate_agent.is_some() => row.cursor,
+            ListRow::Workspace(entry) if state.navigate_agent.is_none() => {
+                state.selected_workspace_id.is_some_and(|target| {
+                    target.matches(
+                        state.active_endpoint_id,
+                        &snapshot.workspaces[entry.index].workspace_id,
+                    )
+                })
+            }
+            _ => false,
+        })
+    } else if reveal_focus {
+        rows.iter().position(|row| {
+            matches!(row, ListRow::Workspace(entry) if snapshot.workspaces[entry.index].focused)
+        })
+    } else {
+        None
+    };
+    if let Some(target) = reveal_target {
         *state.workspace_scroll = super::scroll::list_scroll_start_to_reveal(
             &row_heights,
             &gaps,
@@ -127,13 +139,13 @@ pub(crate) fn render_sidebar(
             *state.workspace_scroll,
             target,
         );
-        metrics = super::scroll::list_scroll_metrics(
-            &row_heights,
-            &gaps,
-            body.height,
-            *state.workspace_scroll,
-        );
     }
+    let metrics = super::scroll::list_scroll_metrics(
+        &row_heights,
+        &gaps,
+        body.height,
+        *state.workspace_scroll,
+    );
     hits.workspace_max_scroll = metrics.max_offset_from_bottom;
     hits.workspace_scroll_metrics = Some(metrics);
     *state.workspace_scroll = metrics
@@ -142,20 +154,48 @@ pub(crate) fn render_sidebar(
     let show_scrollbar = metrics.max_offset_from_bottom > 0 && body.width > 1;
     let content_width = body.width.saturating_sub(u16::from(show_scrollbar));
     let mut y = body.y;
-    for (entry_position, entry) in entries.iter().enumerate().skip(*state.workspace_scroll) {
+    for (position, row) in rows.iter().enumerate().skip(*state.workspace_scroll) {
+        let gap = gaps[position];
+        let ListRow::Workspace(entry) = row else {
+            let ListRow::Agent {
+                row,
+                workspace_indented,
+            } = row
+            else {
+                continue;
+            };
+            let height = row_heights[position].min(body.height);
+            if y.saturating_add(height) > body.bottom() {
+                break;
+            }
+            let rect = Rect::new(body.x, y, content_width, height);
+            super::agent_rows::render_agent_row_indented(
+                buffer,
+                rect,
+                &row.row,
+                config,
+                super::space_agents::agent_indent(*workspace_indented),
+                row.cursor,
+            );
+            hits.space_agents
+                .push((rect, ClientEndpointId::Local, row.row.pane_id.clone()));
+            y = y.saturating_add(height + gap);
+            continue;
+        };
         let Some(workspace) = snapshot.workspaces.get(entry.index) else {
             continue;
         };
         let status = displayed_workspace_status(snapshot, workspace, state.collapsed_groups);
-        let rows = workspace_rows(workspace, status, entry.indented, &config.spaces);
-        let row_height = (rows.len().max(1).min(u16::MAX as usize) as u16).min(body.height);
+        let tokens = workspace_rows(workspace, status, entry.indented, &config.spaces);
+        let row_height = (tokens.len().max(1).min(u16::MAX as usize) as u16).min(body.height);
         if y.saturating_add(row_height) > body.bottom() {
             break;
         }
         let rect = Rect::new(body.x, y, content_width, row_height);
-        let selected = state.selected_workspace_id.is_some_and(|target| {
-            target.matches(state.active_endpoint_id, &workspace.workspace_id)
-        });
+        let selected = state.navigate_agent.is_none()
+            && state.selected_workspace_id.is_some_and(|target| {
+                target.matches(state.active_endpoint_id, &workspace.workspace_id)
+            });
         let dragged = state.dragged_workspace_id == Some(workspace.workspace_id.as_str());
         if selected {
             buffer.set_style(rect, Style::default().bg(palette.selection_bg));
@@ -170,7 +210,7 @@ pub(crate) fn render_sidebar(
             status,
             config.status_indicators,
             entry,
-            rows,
+            tokens,
             workspace.focused,
             selected,
             state.selected_workspace_id.is_some(),
@@ -192,9 +232,6 @@ pub(crate) fn render_sidebar(
 
             group_toggle,
         });
-        let gap = entries
-            .get(entry_position + 1)
-            .map_or(0, |next| u16::from(!next.indented) * config.spaces.row_gap);
         y = y.saturating_add(row_height + gap);
     }
 

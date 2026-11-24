@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
+use super::SpaceAgentsConfig;
 use super::agent::{Agent, agent_label, parse_canonical_agent_label};
 
 const MAX_SIDEBAR_ROWS: usize = 16;
@@ -369,6 +370,8 @@ pub struct SpacesSidebarConfig {
     #[serde(deserialize_with = "deserialize_sidebar_rows")]
     pub rows: SpaceSidebarRows,
     pub row_gap: u16,
+    /// hc-tui's own key: list agents under their space row. Default: none.
+    pub agents: SpaceAgentsConfig,
 }
 
 impl Default for SpacesSidebarConfig {
@@ -379,6 +382,7 @@ impl Default for SpacesSidebarConfig {
                 vec![SpaceSidebarToken::Branch, SpaceSidebarToken::GitStatus],
             ],
             row_gap: DEFAULT_SIDEBAR_ROW_GAP,
+            agents: SpaceAgentsConfig::None,
         }
     }
 }

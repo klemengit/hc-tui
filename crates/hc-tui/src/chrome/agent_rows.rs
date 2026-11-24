@@ -193,8 +193,23 @@ pub(crate) fn render_agent_row(
     row: &AgentRow,
     config: &super::ClientShellConfig,
 ) {
+    render_agent_row_indented(buffer, rect, row, config, 0, false);
+}
+
+/// `render_agent_row` shifted right by `indent` columns, for an agent drawn
+/// under its space row. `cursor` paints the navigate-mode cursor background.
+pub(crate) fn render_agent_row_indented(
+    buffer: &mut Buffer,
+    rect: Rect,
+    row: &AgentRow,
+    config: &super::ClientShellConfig,
+    indent: u16,
+    cursor: bool,
+) {
     let palette = &config.palette;
-    let row_style = if row.focused {
+    let row_style = if cursor {
+        Style::default().bg(super::workspace::workspace_selection_background(palette))
+    } else if row.focused {
         Style::default().bg(palette.active_row_bg)
     } else {
         Style::default()
@@ -223,7 +238,7 @@ pub(crate) fn render_agent_row(
         row.rows.clone()
     };
     for (index, tokens) in rows.iter().take(rect.height as usize).enumerate() {
-        let indent = if index == 0 { 1 } else { 3 };
+        let indent = usize::from(indent) + if index == 0 { 1 } else { 3 };
         let mut spans = vec![ratatui::text::Span::raw(" ".repeat(indent))];
         spans.extend(resolved_token_spans(
             tokens,
@@ -233,7 +248,7 @@ pub(crate) fn render_agent_row(
             secondary,
             secondary,
             palette,
-            rect.width.saturating_sub(indent as u16) as usize,
+            usize::from(rect.width).saturating_sub(indent),
         ));
         Paragraph::new(Line::from(spans)).style(row_style).render(
             Rect::new(rect.x, rect.y + index as u16, rect.width, 1),

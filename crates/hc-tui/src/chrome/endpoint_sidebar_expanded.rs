@@ -8,26 +8,17 @@ use ratatui::{
     style::{Modifier, Style},
 };
 
+use super::endpoint_sidebar_rows::{Row, build_rows, reveal_row, row_gaps, row_heights};
 use super::endpoints::collapsed_groups_for_endpoint;
 use super::render::{
     MachineHit, ShellHitMap, ShellRenderState, WORKSPACE_HEADER_ROWS, WorkspaceHit, display_width,
     put_right_text, put_text, put_version_badge,
 };
 use super::sidebar_render::{
-    displayed_workspace_status, render_parent_group_toggle, render_workspace_rows,
-    workspace_entries, workspace_rows,
+    displayed_workspace_status, render_parent_group_toggle, render_workspace_rows, workspace_rows,
 };
 use super::snapshot::{ClientEndpointStatus, ClientShellSnapshot};
 use super::spans::{expanded_sidebar_sections, sidebar_section_divider_rect};
-use super::workspace::WorkspaceEntry;
-
-enum Row {
-    Endpoint(usize),
-    Workspace {
-        endpoint: usize,
-        entry: WorkspaceEntry,
-    },
-}
 
 pub(crate) fn render_expanded(
     buffer: &mut Buffer,
@@ -76,25 +67,7 @@ pub(crate) fn render_expanded(
 
     let empty_collapsed_groups = HashSet::new();
 
-    let mut rows = Vec::new();
-    for (endpoint_index, endpoint) in state.endpoints.iter().enumerate() {
-        rows.push(Row::Endpoint(endpoint_index));
-        if state.collapsed_endpoints.contains(&endpoint.endpoint_id) {
-            continue;
-        }
-        if let Some(snapshot) = endpoint.snapshot.as_deref() {
-            let collapsed_groups = collapsed_groups_for_endpoint(state, &endpoint.endpoint_id)
-                .unwrap_or(&empty_collapsed_groups);
-            rows.extend(
-                workspace_entries(snapshot, collapsed_groups)
-                    .into_iter()
-                    .map(|entry| Row::Workspace {
-                        endpoint: endpoint_index,
-                        entry,
-                    }),
-            );
-        }
-    }
+    let rows = build_rows(state, config);
     let body = Rect::new(
         workspace_area.x,
         workspace_area.y.saturating_add(WORKSPACE_HEADER_ROWS),
@@ -104,84 +77,20 @@ pub(crate) fn render_expanded(
             .saturating_sub(WORKSPACE_HEADER_ROWS + 1),
     );
     hits.workspace_body = body;
-    let row_heights = rows
-        .iter()
-        .map(|row| match row {
-            Row::Endpoint(_) => 1,
-            Row::Workspace { endpoint, entry } => {
-                let endpoint = &state.endpoints[*endpoint];
-                let collapsed_groups = collapsed_groups_for_endpoint(state, &endpoint.endpoint_id)
-                    .unwrap_or(&empty_collapsed_groups);
-                endpoint
-                    .snapshot
-                    .as_deref()
-                    .and_then(|snapshot| {
-                        let workspace = snapshot.workspaces.get(entry.index)?;
-                        Some(
-                            workspace_rows(
-                                workspace,
-                                displayed_workspace_status(snapshot, workspace, collapsed_groups),
-                                entry.indented,
-                                &config.spaces,
-                            )
-                            .len()
-                            .max(1)
-                            .min(u16::MAX as usize) as u16,
-                        )
-                    })
-                    .unwrap_or(1)
-            }
-        })
-        .collect::<Vec<_>>();
-    let gaps = rows
-        .iter()
-        .enumerate()
-        .map(|(index, row)| match (row, rows.get(index + 1)) {
-            (
-                Row::Workspace { endpoint, .. },
-                Some(Row::Workspace {
-                    endpoint: next_endpoint,
-                    entry,
-                }),
-            ) if endpoint == next_endpoint => u16::from(!entry.indented) * config.spaces.row_gap,
-            _ => 0,
-        })
-        .collect::<Vec<_>>();
+    let row_heights = row_heights(&rows, state, config);
+    let gaps = row_gaps(&rows, config);
     let reveal_navigation = !body.is_empty() && std::mem::take(state.reveal_navigation_workspace);
     let reveal_focus = !body.is_empty() && std::mem::take(state.reveal_focused_workspace);
-    if reveal_navigation || reveal_focus {
-        let selected_row = rows.iter().position(|row| match row {
-            Row::Workspace { endpoint, entry } => {
-                let endpoint = &state.endpoints[*endpoint];
-                endpoint
-                    .snapshot
-                    .as_deref()
-                    .and_then(|snapshot| snapshot.workspaces.get(entry.index))
-                    .is_some_and(|workspace| {
-                        if reveal_navigation {
-                            state.selected_workspace_id.is_some_and(|target| {
-                                target.matches(&endpoint.endpoint_id, &workspace.workspace_id)
-                            })
-                        } else {
-                            &endpoint.endpoint_id == state.active_endpoint_id
-                                && active_snapshot.is_some_and(|snapshot| {
-                                    snapshot.focused_workspace_id.as_deref()
-                                        == Some(workspace.workspace_id.as_str())
-                                })
-                        }
-                    })
-            }
-            Row::Endpoint(_) => false,
-        });
-        if let Some(selected_row) = selected_row {
-            *state.workspace_scroll = super::scroll::list_scroll_start_to_reveal(
-                &row_heights,
-                &gaps,
-                body.height,
-                *state.workspace_scroll,
-                selected_row,
-            );
-        }
+    if (reveal_navigation || reveal_focus)
+        && let Some(selected_row) = reveal_row(&rows, state, active_snapshot, reveal_navigation)
+    {
+        *state.workspace_scroll = super::scroll::list_scroll_start_to_reveal(
+            &row_heights,
+            &gaps,
+            body.height,
+            *state.workspace_scroll,
+            selected_row,
+        );
     }
     let metrics = super::scroll::list_scroll_metrics(
         &row_heights,
@@ -255,9 +164,10 @@ pub(crate) fn render_expanded(
                     rect.height,
                 );
                 let endpoint_active = &endpoint.endpoint_id == state.active_endpoint_id;
-                let selected = state.selected_workspace_id.is_some_and(|target| {
-                    target.matches(&endpoint.endpoint_id, &workspace.workspace_id)
-                });
+                let selected = state.navigate_agent.is_none()
+                    && state.selected_workspace_id.is_some_and(|target| {
+                        target.matches(&endpoint.endpoint_id, &workspace.workspace_id)
+                    });
                 render_workspace_rows(
                     buffer,
                     nested,
@@ -294,6 +204,43 @@ pub(crate) fn render_expanded(
 
                     group_toggle,
                 });
+                y = y
+                    .saturating_add(height)
+                    .saturating_add(gaps.get(row_index).copied().unwrap_or(0));
+            }
+            Row::Agent {
+                endpoint,
+                workspace_indented,
+                row,
+            } => {
+                let endpoint = &state.endpoints[*endpoint];
+                let height = row_heights[row_index].min(body.height);
+                if y.saturating_add(height) > body.bottom() {
+                    break;
+                }
+                let rect = Rect::new(body.x, y, content_width, height);
+                super::agent_rows::render_agent_row_indented(
+                    buffer,
+                    rect,
+                    &row.row,
+                    config,
+                    // Past the machine row's own two-column nesting.
+                    2 + super::space_agents::agent_indent(*workspace_indented),
+                    row.cursor,
+                );
+                if endpoint.status != ClientEndpointStatus::Online {
+                    buffer.set_style(
+                        rect,
+                        Style::default()
+                            .fg(palette.overlay0)
+                            .add_modifier(Modifier::DIM),
+                    );
+                }
+                hits.space_agents.push((
+                    rect,
+                    endpoint.endpoint_id.clone(),
+                    row.row.pane_id.clone(),
+                ));
                 y = y
                     .saturating_add(height)
                     .saturating_add(gaps.get(row_index).copied().unwrap_or(0));
