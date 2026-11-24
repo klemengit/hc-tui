@@ -61,6 +61,20 @@ fn agent_panel_space_headers_loads_without_unknown_key_diagnostics() {
 }
 
 #[test]
+fn agent_panel_defaults_on_and_loads_without_unknown_key_diagnostics() {
+    assert!(crate::config::UiConfig::default().agent_panel);
+    let loaded = load_text("[ui]\nsidebar_width = 30\n");
+    assert!(loaded.config.ui.agent_panel);
+    let loaded = load_text("[ui]\nagent_panel = false\n");
+    assert!(!loaded.config.ui.agent_panel);
+    assert!(
+        loaded.diagnostics.is_empty(),
+        "unexpected diagnostics: {:?}",
+        loaded.diagnostics
+    );
+}
+
+#[test]
 fn herdr_only_experimental_keys_are_accepted_and_ignored() {
     let loaded = load_text("[experimental]\npane_history = true\n");
     assert!(loaded.diagnostics.is_empty());

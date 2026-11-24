@@ -77,6 +77,10 @@ pub struct UiConfig {
     /// Head each space's agents with the space's name when the agent panel
     /// is sorted by space, as the herdr app's grouped list does. Default: false.
     pub agent_panel_space_headers: bool,
+    /// hc-tui's own key: show the agents panel under the spaces list. When
+    /// `false` the spaces list takes the whole sidebar height; agent
+    /// next/previous actions keep working. Default: true.
+    pub agent_panel: bool,
     /// Agent status indicator style. Saved values are "dots" or "symbols". Default: "dots".
     pub status_indicators: StatusIndicatorStyle,
     /// Expanded sidebar row composition.
@@ -117,6 +121,7 @@ impl Default for UiConfig {
             window_title: super::window_title::default_window_title(),
             agent_panel_sort: AgentPanelSortConfig::Priority,
             agent_panel_space_headers: false,
+            agent_panel: true,
             status_indicators: StatusIndicatorStyle::Dots,
             sidebar: SidebarConfig::default(),
             accent: "cyan".into(),

@@ -40,8 +40,9 @@ pub(crate) fn render_sidebar(
         Rect::new(area.right().saturating_sub(1), area.y, 1, area.height)
     };
     let (workspace_area, detail_area) =
-        expanded_sidebar_sections(area, state.sidebar_section_split);
-    hits.sidebar_section_divider = sidebar_section_divider_rect(area, state.sidebar_section_split);
+        expanded_sidebar_sections(area, state.sidebar_section_split, config.agent_panel);
+    hits.sidebar_section_divider =
+        sidebar_section_divider_rect(area, state.sidebar_section_split, config.agent_panel);
     put_text(
         buffer,
         workspace_area.x,

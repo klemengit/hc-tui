@@ -175,6 +175,16 @@ Inventory and output arrive on different connections. Fresh paint does not
 prove that the viewer consumed output corresponding to a completion; the
 stalled-stream race remains a limitation, never a parity pass.
 
+## hc-tui sidebar options
+
+These keys exist only in hc-tui. They are opt-in: every default keeps the
+herdr layout. Herdr itself does not know them, so a terminal herdr that reads
+the same `config.toml` reports them as unknown keys.
+
+| Key | Default | Effect |
+|---|---|---|
+| `[ui] agent_panel` | `true` | `false` hides the agents panel. The spaces list takes the whole sidebar height and the section divider disappears. Agent next/previous and the agent shortcuts keep working. The collapsed sidebar drops its agent icons too. The mobile switcher is not affected. |
+
 ## Machines, selection and geometry
 
 Core machine and connection states map to herdr's endpoint states. The

@@ -20,6 +20,11 @@ All notable changes to hc-tui are documented here. The format follows
   the same rule as a pane (normal screen, no mouse reporting); before, they
   reached the program, which usually ignored them.
 
+### Added
+
+- `[ui] agent_panel` (default `true`): `false` hides the agents panel so the
+  spaces list takes the whole sidebar height.
+
 ## 0.1.19 — 2026-11-24
 
 ### Added

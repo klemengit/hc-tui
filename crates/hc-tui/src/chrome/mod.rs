@@ -71,6 +71,8 @@ pub struct ClientShellConfig {
     pub agents: AgentsSidebarConfig,
     pub agent_panel_sort: AgentPanelSortConfig,
     pub agent_panel_space_headers: bool,
+    /// `[ui] agent_panel` — draw the agents panel under the spaces list.
+    pub agent_panel: bool,
     pub status_indicators: StatusIndicatorStyle,
     pub theme_name: String,
     pub theme_runtime: ThemeRuntimeConfig,
@@ -160,6 +162,7 @@ impl ClientShellConfig {
             agents: ui.sidebar.agents.clone(),
             agent_panel_sort: ui.agent_panel_sort,
             agent_panel_space_headers: ui.agent_panel_space_headers,
+            agent_panel: ui.agent_panel,
             status_indicators: ui.status_indicators,
             theme_name,
             theme_runtime,

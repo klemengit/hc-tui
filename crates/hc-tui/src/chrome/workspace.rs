@@ -34,12 +34,15 @@ pub(crate) fn workspace_active_background(
     }
 }
 
-pub(crate) fn collapsed_sidebar_sections(area: Rect) -> (Rect, Option<u16>, Rect) {
+pub(crate) fn collapsed_sidebar_sections(
+    area: Rect,
+    agent_panel: bool,
+) -> (Rect, Option<u16>, Rect) {
     let content = Rect::new(area.x, area.y, area.width.saturating_sub(1), area.height);
     if content.is_empty() {
         return (Rect::default(), None, Rect::default());
     }
-    if content.height < 7 {
+    if !agent_panel || content.height < 7 {
         return (content, None, Rect::default());
     }
     let workspace_height = content.height.div_ceil(2);
@@ -65,7 +68,8 @@ pub(crate) fn render_collapsed_sidebar(
     let selection_background = workspace_selection_background(palette);
     let active_background = workspace_active_background(palette, selected_workspace_id.is_some());
     super::render::render_sidebar_background(buffer, area, palette);
-    let (workspace_area, divider_y, detail_area) = collapsed_sidebar_sections(area);
+    let (workspace_area, divider_y, detail_area) =
+        collapsed_sidebar_sections(area, config.agent_panel);
     for (index, workspace) in snapshot
         .workspaces
         .iter()

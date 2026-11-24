@@ -781,6 +781,11 @@ Everything else on the compared surfaces still diffs normally.
   machines added (`hc machine add`), each machine's spaces get their own
   headers without naming the machine, so a space of the same name on two
   machines heads two groups.
+- **Optional agents panel.** Opt-in: with `[ui] agent_panel = false` the
+  spaces list takes the whole sidebar height and the agents panel, its
+  header and the section divider are not drawn (the collapsed sidebar loses
+  its agent icons too). On by default, so the layout matches the reference.
+  Agent actions do not depend on the panel and keep working.
 - **Persistent float default for a shell popup.** Deliberate: an hc-tui
   `[[keys.command]]` with `type = "popup"` whose command is a bare
   interactive shell is the tab's persistent float unless the entry says
