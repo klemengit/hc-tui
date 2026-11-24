@@ -18,6 +18,7 @@ fn key(app: &mut App, key: Key) {
 fn command(action: CustomCommandAction, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
         layout: Default::default(),
+        screen: false,
         bindings: Default::default(),
         label: "alt+f".into(),
         command: line.into(),

@@ -97,6 +97,8 @@ pub enum Action {
     Exec {
         line: String,
         machine: Option<String>,
+        /// A `screen = true` file removed once the call has finished.
+        screen_file: Option<std::path::PathBuf>,
     },
     /// `terminal.run` for the floating popup — the terminal is labeled
     /// `hc-tui.popup` so the projection keeps it out of the sidebar.

@@ -38,6 +38,9 @@ pub(super) struct PopupState {
     pub width: Option<PopupSize>,
     pub height: Option<PopupSize>,
     pub layout: PopupLayout,
+    /// The `screen = true` file; removed when the popup ends (drop).
+    #[allow(dead_code)]
+    pub screen: Option<super::screen_file::ScreenFile>,
     /// Tab the popup was opened over; a focus change dismisses it.
     /// Ephemeral popups only — a persistent float's qualified owner
     /// lives in `key`, so this is `None` there.
@@ -91,6 +94,9 @@ pub(super) struct CommandOverlay {
     /// Same inventory-lag guard as `PopupState.seen` — the run must be
     /// observed once before disappearance counts as "exited".
     pub seen: bool,
+    /// The `screen = true` file; removed when the overlay ends (drop).
+    #[allow(dead_code)]
+    pub screen: Option<super::screen_file::ScreenFile>,
 }
 
 /// A peek overlay: an observe-only attach over a running terminal plus its
@@ -116,10 +122,12 @@ impl App {
                     .focused
                     .as_deref()
                     .and_then(|s| s.split_once('/').map(|(m, _)| m.to_owned()));
-                let prefix = super::creation::export_prefix(&self.focused_command_env());
+                let screen = self.stage_screen(command);
+                let prefix = super::creation::export_prefix(&self.command_env(screen.as_ref()));
                 self.submit_action(Action::Exec {
                     line: format!("{prefix}{}", command.command),
                     machine,
+                    screen_file: screen.map(super::screen_file::ScreenFile::release),
                 });
             }
             // The reference splits horizontally then zooms the new pane
@@ -132,7 +140,12 @@ impl App {
                     creation.params.line = Some(command.command.clone());
                     creation.params.keep = false;
                     creation.params.rm = true;
-                    creation.params.env.extend(self.focused_command_env());
+                    let screen = self.stage_screen(command);
+                    creation
+                        .params
+                        .env
+                        .extend(self.command_env(screen.as_ref()));
+                    self.pane_screen = screen;
                     creation.report_created = true;
                     self.submit_action(Action::Create(Box::new(creation)));
                 }
@@ -169,6 +182,7 @@ impl App {
             self.dismiss_popup();
         }
         let geometry = self.popup_geometry(command.width, command.height, command.layout);
+        let screen = self.stage_screen(command);
         let mut params = hc_proto::terminal::RunParams {
             line: Some(command.command.clone()),
             rm: true,
@@ -177,7 +191,7 @@ impl App {
             no_parent: true,
             env: {
                 let mut env = program_env();
-                env.extend(self.focused_command_env());
+                env.extend(self.command_env(screen.as_ref()));
                 env
             },
             labels: BTreeMap::from([(POPUP_LABEL.into(), "1".into())]),
@@ -205,6 +219,7 @@ impl App {
             owner: String::new(),
             command: String::new(),
         });
+        self.popup_screen = screen;
         self.submit_action(Action::RunPopup { params });
     }
 
@@ -213,6 +228,7 @@ impl App {
     /// while the run was in flight.
     pub(super) fn on_popup_spawned(&mut self, terminal: String, created_ms: u64) {
         let Some(pending) = self.popup_pending.take() else {
+            self.popup_screen = None;
             return;
         };
         if pending.persistent {
@@ -261,6 +277,7 @@ impl App {
             key: None,
             created_ms,
             seen: false,
+            screen: self.popup_screen.take(),
         });
     }
 

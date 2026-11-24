@@ -295,6 +295,7 @@ pub type ClipboardWriteFn = unsafe extern "C" fn(Terminal, *mut c_void, *const C
 pub type Formatter = *mut c_void;
 
 // GhosttyPointTag — vendor/ghostty/include/ghostty/vt/point.h.
+pub const POINT_TAG_VIEWPORT: i32 = 1;
 pub const POINT_TAG_SCREEN: i32 = 2;
 
 /// `GhosttyPointCoordinate`.
@@ -363,6 +364,7 @@ pub struct Selection {
 
 // GhosttyFormatterFormat — vendor/ghostty/include/ghostty/vt/types.h.
 pub const FORMATTER_FORMAT_PLAIN: i32 = 0;
+pub const FORMATTER_FORMAT_VT: i32 = 1;
 
 /// `GhosttyFormatterScreenExtra`.
 #[repr(C)]

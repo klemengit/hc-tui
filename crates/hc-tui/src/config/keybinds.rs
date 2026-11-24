@@ -327,6 +327,8 @@ pub struct CustomCommandKeybind {
     pub persistent: bool,
     /// hc-tui only: placement and frame of an ephemeral popup.
     pub layout: crate::popup_size::PopupLayout,
+    /// hc-tui only: hand the command the focused pane's coloured screen.
+    pub screen: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

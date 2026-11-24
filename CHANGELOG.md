@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[[keys.command]]` `screen = true` (default `false`): hc-tui writes the
+  focused pane's visible screen, with colours and attributes, to a private
+  file and sets `HC_FOCUSED_SCREEN` to its path. Local panes only. The file is
+  removed when the command ends.
 - `[[keys.command]]` popups: `placement = "pane"` (default `"center"`) covers
   exactly the focused pane's terminal grid, and `border = false` (default
   `true`) drops the frame and title. With `placement = "pane"`, `width` and

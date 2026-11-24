@@ -122,6 +122,8 @@ impl App {
             popup: None,
             popup_pending: None,
             command_overlay: None,
+            popup_screen: None,
+            pane_screen: None,
             peek: None,
             sched: sched::Scheduler::default(),
             focused: None,

@@ -142,11 +142,19 @@ pub(super) async fn run_action(client: &Client, action: Action) -> Result<Outcom
             rm_after_kill(client, &terminal).await?;
             Ok(Outcome::Done)
         }
-        Action::Exec { line, machine } => {
-            client
+        Action::Exec {
+            line,
+            machine,
+            screen_file,
+        } => {
+            let result = client
                 .call("machine.exec", Some(json!({"line": line, "on": machine})))
                 .await
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| e.to_string());
+            if let Some(path) = screen_file {
+                let _ = std::fs::remove_file(path);
+            }
+            result?;
             Ok(Outcome::Done)
         }
         Action::RunPopup { params } => {

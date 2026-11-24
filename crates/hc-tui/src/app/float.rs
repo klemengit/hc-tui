@@ -263,6 +263,7 @@ impl App {
         }
         self.popup = Some(PopupState {
             layout: Default::default(),
+            screen: None,
             pane,
             terminal: entry.terminal,
             width: entry.width,
@@ -304,6 +305,7 @@ impl App {
         }
         self.popup = Some(PopupState {
             layout: Default::default(),
+            screen: None,
             pane,
             terminal,
             width,

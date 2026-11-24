@@ -435,3 +435,19 @@ fn popup_placement_and_border_parse_with_defaults_unchanged() {
         assert!(!diagnostics.is_empty(), "{extra}");
     }
 }
+
+#[test]
+fn screen_defaults_off_and_parses() {
+    let screens = |extra: &str| {
+        let loaded = load_text(&format!(
+            "[[keys.command]]\nkey = 'alt+h'\ntype = 'popup'\ncommand = 'htop'\n{extra}\n"
+        ));
+        let (live, diagnostics) = loaded.config.live_keybinds_with_diagnostics().unwrap();
+        (live.keybinds.custom_commands[0].screen, diagnostics)
+    };
+    assert_eq!(screens(""), (false, vec![]));
+    assert_eq!(screens("screen = true"), (true, vec![]));
+    let (screen, diagnostics) = screens("persistent = true\nscreen = true");
+    assert!(!screen);
+    assert!(!diagnostics.is_empty());
+}

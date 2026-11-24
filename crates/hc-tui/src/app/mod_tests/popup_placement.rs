@@ -155,6 +155,7 @@ async fn the_popup_draws_on_the_pane_and_keys_go_to_it() {
         width: None,
         height: None,
         layout: PANE,
+        screen: None,
         owner_tab: app.projection.snapshot.focused_tab_id.clone(),
         persistent: false,
         key: None,

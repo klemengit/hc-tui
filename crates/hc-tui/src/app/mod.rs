@@ -53,6 +53,7 @@ mod reload;
 mod routing;
 mod runtime;
 mod sched;
+mod screen_file;
 mod seen;
 mod selection_copy;
 mod settings;
@@ -216,6 +217,10 @@ pub struct App {
     /// The `pane` command's zoomed overlay — the reference's
     /// `overlay_panes` entry for a spawned command pane.
     command_overlay: Option<popup::CommandOverlay>,
+    /// `screen = true` files staged between a command's start and the
+    /// popup / command pane that owns them.
+    popup_screen: Option<screen_file::ScreenFile>,
+    pane_screen: Option<screen_file::ScreenFile>,
     /// The worker-peek overlay — herdr-app's `terminal-peek`.
     peek: Option<popup::PeekState>,
     sched: sched::Scheduler,

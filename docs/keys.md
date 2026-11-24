@@ -130,6 +130,22 @@ that machine's home directory, a `pane` in the space's folder. A `shell` command
 a shell line with the variables put in front as `export NAME='value'; `, so it sees the same variables. A persistent
 float gets the values from the moment it was first started, not from later key presses.
 
+#### `screen = true`: the coloured screen
+
+`hc read` returns plain text. hc-tui only: set `screen = true` (default `false`) on a `popup`, `shell` or `pane`
+command and hc-tui writes the focused pane's visible screen to a file when the key is pressed, then sets
+`HC_FOCUSED_SCREEN` to its path.
+
+The file is the visible rows only, no scrollback, top to bottom: exactly one line per row, each ending in a reset
+(`ESC[0m`) and `\n`. Colours (palette, or truecolor where the program set it) and bold, dim, italic, underline and
+reverse are ordinary SGR sequences. Trailing blank cells are not padded. A wide character is written once, so columns
+stay aligned when you print the file with `cat`. The file is private (mode 0600) and lives in `$XDG_RUNTIME_DIR` (the
+system temp directory if that is not set).
+
+It is removed when the popup closes, when the command pane exits, or when a `shell` command finishes, and when hc-tui
+exits normally. A persistent float and a `plugin_action` ignore `screen` (with a diagnostic). A pane on a remote
+machine gets no file and no variable, because the command runs on that machine and cannot read this one.
+
 ### Floating terminal
 
 A `[[keys.command]]` entry binds a key to a command. With `type = "popup"`, the command runs in a floating terminal over

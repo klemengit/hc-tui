@@ -26,6 +26,9 @@ pub struct CommandKeybindConfig {
     pub placement: Option<String>,
     /// hc-tui only, popup: `false` drops the frame and title.
     pub border: Option<bool>,
+    /// hc-tui only: write the focused pane's visible screen as an ANSI
+    /// file and pass its path in `HC_FOCUSED_SCREEN`.
+    pub screen: Option<bool>,
 }
 
 impl CommandKeybindConfig {}
@@ -42,6 +45,7 @@ impl Default for CommandKeybindConfig {
             persistent: None,
             placement: None,
             border: None,
+            screen: None,
         }
     }
 }

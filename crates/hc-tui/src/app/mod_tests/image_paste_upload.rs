@@ -91,6 +91,7 @@ async fn popup_terminal_is_the_target() {
     }));
     app.popup = Some(popup::PopupState {
         layout: Default::default(),
+        screen: None,
         pane: popup_pane,
         terminal: "t9".into(),
         width: None,

@@ -88,6 +88,41 @@ impl App {
         )
     }
 
+    /// `focused_command_env` plus `HC_FOCUSED_SCREEN` when a screen file
+    /// was staged.
+    pub(super) fn command_env(
+        &self,
+        screen: Option<&super::screen_file::ScreenFile>,
+    ) -> BTreeMap<String, String> {
+        let mut env = self.focused_command_env();
+        if let Some(screen) = screen {
+            env.insert(
+                "HC_FOCUSED_SCREEN".into(),
+                screen.path().to_string_lossy().into_owned(),
+            );
+        }
+        env
+    }
+
+    /// For `screen = true`: write the focused pane's visible screen to a
+    /// private file. Local panes only; a remote one gets no file (the
+    /// command runs on another machine that cannot read it).
+    pub(super) fn stage_screen(
+        &self,
+        command: &crate::config::CustomCommandKeybind,
+    ) -> Option<super::screen_file::ScreenFile> {
+        if !command.screen {
+            return None;
+        }
+        let id = self.focused.as_deref().filter(|id| !id.contains('/'))?;
+        let ansi = self
+            .displayed_pane(id)?
+            .vt_ref()?
+            .read_viewport_ansi()
+            .ok()?;
+        super::screen_file::ScreenFile::write(&ansi).ok()
+    }
+
     pub(super) fn creation(
         &self,
         vertical: Option<bool>,

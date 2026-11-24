@@ -468,6 +468,7 @@ fn put_image_gets_the_call_timeout_everything_else_the_interactive_one() {
         Action::Exec {
             line: "ls".into(),
             machine: None,
+            screen_file: None,
         },
     ] {
         assert_eq!(action_deadline(&action), std::time::Duration::from_secs(15));

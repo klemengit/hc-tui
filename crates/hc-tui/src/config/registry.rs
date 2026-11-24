@@ -467,6 +467,13 @@ fn append_custom_command_bindings(
             }
             layout.border = command.border.unwrap_or(true);
         }
+        let mut screen = command.screen.unwrap_or(false);
+        if screen && (action == CustomCommandAction::PluginAction || persistent) {
+            diagnostics.push(format!(
+                "screen on a plugin action or persistent float: keys.command[{index}]; ignoring screen"
+            ));
+            screen = false;
+        }
         let label = bindings.label().unwrap_or_else(|| "unset".to_string());
         keybinds.custom_commands.push(CustomCommandKeybind {
             bindings,
@@ -478,6 +485,7 @@ fn append_custom_command_bindings(
             height,
             persistent,
             layout,
+            screen,
         });
     }
 }

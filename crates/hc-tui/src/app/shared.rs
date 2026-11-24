@@ -92,6 +92,7 @@ impl App {
                         terminal,
                         created_ms: observed.map(|t| t.created_ms),
                         seen: observed.is_some(),
+                        screen: self.pane_screen.take(),
                     });
                 }
             }
@@ -100,6 +101,8 @@ impl App {
                 // forever, swallowing input — clear it. A misattributed
                 // error is recovered by float label rediscovery.
                 self.popup_pending = None;
+                self.popup_screen = None;
+                self.pane_screen = None;
                 self.show_notice("Action failed", &error);
             }
             None => {
