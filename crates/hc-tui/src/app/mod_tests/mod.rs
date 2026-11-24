@@ -2,6 +2,7 @@
 mod agent_panel;
 mod cases_1;
 mod cases_2;
+mod command_env;
 mod empty_core_workspace;
 mod endpoint_nav;
 mod endpoint_nav_b;

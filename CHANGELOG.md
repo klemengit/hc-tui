@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- Custom commands (`[[keys.command]]`, all types and persistent floats) get
+  `HC_FOCUSED_TERMINAL`, `HC_FOCUSED_MACHINE`, `HC_FOCUSED_SPACE` and
+  `HC_FOCUSED_TAB`: the terminal that had focus when the key was pressed.
+  Unset when nothing is focused. See docs/keys.md.
 - `[ui] agent_panel` (default `true`): `false` hides the agents panel so the
   spaces list takes the whole sidebar height.
 - `[ui.sidebar.spaces] agents` (default `"none"`): `"active"` or `"all"` lists
