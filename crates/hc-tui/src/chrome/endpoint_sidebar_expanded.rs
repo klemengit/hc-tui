@@ -123,15 +123,16 @@ pub(crate) fn render_expanded(
                     endpoint,
                     collapsed && &endpoint.endpoint_id == state.active_endpoint_id,
                     state.machine_diagnostics,
+                    config.indents.machine_padding,
                     palette,
                 );
                 hits.machines.push(MachineHit {
                     rect,
                     status_badge,
                     collapse_toggle: Rect::new(
-                        rect.x.saturating_add(1),
+                        rect.x.saturating_add(config.indents.machine_padding),
                         rect.y,
-                        u16::from(rect.width > 1),
+                        u16::from(rect.width > config.indents.machine_padding),
                         1,
                     ),
                     endpoint_id: endpoint.endpoint_id.clone(),
@@ -159,9 +160,9 @@ pub(crate) fn render_expanded(
                 }
                 let rect = Rect::new(body.x, y, content_width, height);
                 let nested = Rect::new(
-                    rect.x.saturating_add(2),
+                    rect.x.saturating_add(config.indents.machine_indent),
                     rect.y,
-                    rect.width.saturating_sub(2),
+                    rect.width.saturating_sub(config.indents.machine_indent),
                     rect.height,
                 );
                 let endpoint_active = &endpoint.endpoint_id == state.active_endpoint_id;
@@ -180,6 +181,7 @@ pub(crate) fn render_expanded(
                     selected,
                     state.selected_workspace_id.is_some(),
                     false,
+                    config.indents.space_padding,
                     palette,
                 );
                 if endpoint.status != ClientEndpointStatus::Online {
@@ -225,8 +227,12 @@ pub(crate) fn render_expanded(
                     rect,
                     &row.row,
                     config,
-                    // Past the machine row's own two-column nesting.
-                    2 + super::space_agents::agent_indent(*workspace_indented),
+                    // Past the machine row's own nesting.
+                    config.indents.machine_indent
+                        + super::space_agents::agent_indent(
+                            *workspace_indented,
+                            config.indents.agent_indent,
+                        ),
                     row.cursor,
                 );
                 if endpoint.status != ClientEndpointStatus::Online {

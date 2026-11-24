@@ -199,6 +199,32 @@ fn the_agent_count_space_token_parses_plain_styled_and_with_rules() {
 }
 
 #[test]
+fn sidebar_offsets_default_to_the_herdr_layout_and_parse() {
+    let defaults = load_text("[ui]\nsidebar_width = 30\n")
+        .config
+        .ui
+        .sidebar
+        .indents();
+    assert_eq!(
+        (
+            defaults.machine_padding,
+            defaults.machine_indent,
+            defaults.space_padding,
+            defaults.agent_indent
+        ),
+        (1, 2, 1, 2)
+    );
+    let loaded = load_text(
+        "[ui.sidebar]\nmachine_padding = 0\nmachine_indent = 1\nspace_padding = 0\nagent_indent = 99\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let indents = loaded.config.ui.sidebar.indents();
+    assert_eq!(indents.machine_padding, 0);
+    assert_eq!(indents.machine_indent, 1);
+    assert_eq!(indents.agent_indent, 8, "capped");
+}
+
+#[test]
 fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     let loaded = load_text("[ui]\nsidebar_width = 30\n");
     let nav = &loaded.config.live_keybinds().keybinds.navigate;

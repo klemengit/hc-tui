@@ -195,6 +195,10 @@ the same `config.toml` reports them as unknown keys.
 |---|---|---|
 | `[ui.sidebar.spaces] agents` | `"none"` | Lists agents as indented rows under their space: `"none"` lists nothing, `"active"` lists the space's agents that are not idle or unknown (working, waiting, done, blocked), `"all"` lists every agent. A row uses the `[ui.sidebar.agents]` row layout and tokens. Rows are ordered like the agents panel's priority view. With several machines each machine lists its own agents; a collapsed machine lists none. A click on a row focuses the agent. |
 | `[ui.sidebar.spaces] rows` token `agent_count` | not in the default rows | Add `"agent_count"` (or `{ token = "agent_count", dim = true }`) to a spaces row to show the number of agents in the space, idle ones included (the set tree navigation lists when you open the space). Nothing is drawn for a space without agents. It is a text token, so `rules` (for example `gt`, `equals`, `hide`) work on it. |
+| `[ui.sidebar] machine_padding` | `1` | Blank columns before a machine header's `▾` marker (multi-machine sidebar). The marker's click target moves with it. |
+| `[ui.sidebar] machine_indent` | `2` | Columns the spaces and agent rows under a machine header are shifted right. |
+| `[ui.sidebar] space_padding` | `1` | Blank columns before a space row's first line; its further lines sit two columns deeper. Applies with one machine too. |
+| `[ui.sidebar] agent_indent` | `2` | Columns an agent row under a space is indented by, on top of the row's own padding (worktree child spaces add 4). |
 | `[ui] agent_cycle` | `"all"` | `"active"` makes previous/next agent (`Alt+Up` / `Alt+Down`) step only through agents that are not idle or unknown, the same set as `agents = "active"`. List order is unchanged; see [keys](keys.md#alt-shortcuts). |
 | `[ui] agent_panel` | `true` | `false` hides the agents panel. The spaces list takes the whole sidebar height and the section divider disappears. Agent next/previous and the agent shortcuts keep working. The collapsed sidebar drops its agent icons too. The mobile switcher is not affected. |
 

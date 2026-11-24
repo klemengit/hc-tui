@@ -390,9 +390,62 @@ impl Default for SpacesSidebarConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct SidebarConfig {
     pub agents: AgentsSidebarConfig,
     pub spaces: SpacesSidebarConfig,
+    /// hc-tui's own key: blank columns before a machine header's marker.
+    /// Default: 1.
+    pub machine_padding: u16,
+    /// hc-tui's own key: columns the spaces and agents under a machine
+    /// header are shifted right (multi-machine sidebar). Default: 2.
+    pub machine_indent: u16,
+    /// hc-tui's own key: blank columns before a space row's first line;
+    /// its further lines sit two columns deeper. Default: 1.
+    pub space_padding: u16,
+    /// hc-tui's own key: columns an agent row under a space is indented
+    /// by, on top of the row's own padding. Default: 2.
+    pub agent_indent: u16,
+}
+
+impl Default for SidebarConfig {
+    fn default() -> Self {
+        Self {
+            agents: AgentsSidebarConfig::default(),
+            spaces: SpacesSidebarConfig::default(),
+            machine_padding: 1,
+            machine_indent: 2,
+            space_padding: 1,
+            agent_indent: 2,
+        }
+    }
+}
+
+/// The sidebar's left offsets, each capped so a typo cannot push the text
+/// out of view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SidebarIndents {
+    pub machine_padding: u16,
+    pub machine_indent: u16,
+    pub space_padding: u16,
+    pub agent_indent: u16,
+}
+
+impl SidebarConfig {
+    pub fn indents(&self) -> SidebarIndents {
+        const MAX: u16 = 8;
+        SidebarIndents {
+            machine_padding: self.machine_padding.min(MAX),
+            machine_indent: self.machine_indent.min(MAX),
+            space_padding: self.space_padding.min(MAX),
+            agent_indent: self.agent_indent.min(MAX),
+        }
+    }
+}
+
+impl Default for SidebarIndents {
+    fn default() -> Self {
+        SidebarConfig::default().indents()
+    }
 }

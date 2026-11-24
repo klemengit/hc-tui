@@ -71,6 +71,9 @@ pub struct ClientShellConfig {
     pub hide_tab_bar_when_single_tab: bool,
     pub spaces: SpacesSidebarConfig,
     pub agents: AgentsSidebarConfig,
+    /// `[ui.sidebar]` left offsets (`machine_padding`, `machine_indent`,
+    /// `space_padding`, `agent_indent`).
+    pub indents: crate::config::SidebarIndents,
     pub agent_panel_sort: AgentPanelSortConfig,
     pub agent_panel_space_headers: bool,
     /// `[ui] agent_panel` — draw the agents panel under the spaces list.
@@ -166,6 +169,7 @@ impl ClientShellConfig {
             hide_tab_bar_when_single_tab: ui.hide_tab_bar_when_single_tab,
             spaces: ui.sidebar.spaces.clone(),
             agents: ui.sidebar.agents.clone(),
+            indents: ui.sidebar.indents(),
             agent_panel_sort: ui.agent_panel_sort,
             agent_panel_space_headers: ui.agent_panel_space_headers,
             agent_panel: ui.agent_panel,

@@ -37,6 +37,7 @@ mod reveal_focus;
 mod review_regressions;
 mod seen_dwell;
 mod shared_rpc;
+mod sidebar_indent;
 mod space_agents;
 mod sync_output;
 mod update_card;

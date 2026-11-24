@@ -35,8 +35,8 @@ pub use keybinds::{
     terminal_key_matches_combo,
 };
 pub use sidebar::{
-    AgentSidebarToken, AgentsSidebarConfig, SidebarConfig, SidebarTokenColor, SidebarTokenStyle,
-    SpaceSidebarToken, SpacesSidebarConfig,
+    AgentSidebarToken, AgentsSidebarConfig, SidebarConfig, SidebarIndents, SidebarTokenColor,
+    SidebarTokenStyle, SpaceSidebarToken, SpacesSidebarConfig,
 };
 pub use sound::{AgentSoundOverrides, AgentSoundSetting, SoundConfig};
 pub use theme::{CustomThemeColors, ModeThemeColors, ThemeConfig};

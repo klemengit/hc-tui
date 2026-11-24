@@ -268,6 +268,7 @@ pub(crate) fn render_workspace_rows(
     selected: bool,
     navigating: bool,
     dragged: bool,
+    padding: u16,
     palette: &Palette,
 ) {
     for (row_index, row) in rows.iter().enumerate() {
@@ -297,9 +298,9 @@ pub(crate) fn render_workspace_rows(
                 Style::default().fg(palette.overlay0),
             );
         } else if row_index == 0 {
-            x = x.saturating_add(1);
+            x = x.saturating_add(padding);
         } else {
-            x = x.saturating_add(3);
+            x = x.saturating_add(padding + 2);
         }
         let highlighted = focused || dragged;
         let workspace_style = Style::default()

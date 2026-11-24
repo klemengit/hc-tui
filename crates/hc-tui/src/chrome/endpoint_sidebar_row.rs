@@ -19,6 +19,7 @@ pub(super) fn active_endpoint_label<'a>(state: &'a ShellRenderState<'_>) -> &'a 
         .map_or("Local", |endpoint| endpoint.label.as_str())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn render_endpoint_row(
     buffer: &mut Buffer,
     rect: Rect,
@@ -26,6 +27,7 @@ pub(super) fn render_endpoint_row(
     endpoint: &ClientShellEndpoint,
     highlighted: bool,
     auth: &MachineDiagnostics,
+    padding: u16,
     palette: &Palette,
 ) -> Rect {
     if highlighted {
@@ -55,7 +57,11 @@ pub(super) fn render_endpoint_row(
         rect.x,
         rect.y,
         rect.width.saturating_sub(signal_width.saturating_add(1)),
-        &format!(" {marker} {}", endpoint.label),
+        &format!(
+            "{}{marker} {}",
+            " ".repeat(usize::from(padding)),
+            endpoint.label
+        ),
         Style::default()
             .fg(
                 if matches!(endpoint.status, ClientEndpointStatus::Disabled) {

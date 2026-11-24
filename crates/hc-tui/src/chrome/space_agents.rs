@@ -121,8 +121,8 @@ pub(crate) fn space_agent_rows(
 
 /// Columns an agent row is indented by under its space row: past the
 /// space's own text, and past the worktree branch glyphs of a nested space.
-pub(crate) fn agent_indent(workspace_indented: bool) -> u16 {
-    if workspace_indented { 6 } else { 2 }
+pub(crate) fn agent_indent(workspace_indented: bool, base: u16) -> u16 {
+    if workspace_indented { base + 4 } else { base }
 }
 
 #[cfg(test)]

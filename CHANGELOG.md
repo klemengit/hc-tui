@@ -27,6 +27,9 @@ All notable changes to hc-tui are documented here. The format follows
 - `[ui.sidebar.spaces] agents` (default `"none"`): `"active"` or `"all"` lists
   each space's agents as indented rows under it, using the
   `[ui.sidebar.agents]` row layout.
+- `[ui.sidebar] machine_padding` (1), `machine_indent` (2), `space_padding` (1)
+  and `agent_indent` (2): the sidebar's left offsets, each capped at 8. The
+  defaults keep the current layout; `0` everywhere gives a compact sidebar.
 - Space row token `agent_count` for `[ui.sidebar.spaces] rows`: the number of
   agents in the space, hidden at 0. Not in the default rows.
 - `[ui] seen_after_ms` (default `0`): a completion counts as seen, and

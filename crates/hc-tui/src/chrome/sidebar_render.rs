@@ -175,7 +175,7 @@ pub(crate) fn render_sidebar(
                 rect,
                 &row.row,
                 config,
-                super::space_agents::agent_indent(*workspace_indented),
+                super::space_agents::agent_indent(*workspace_indented, config.indents.agent_indent),
                 row.cursor,
             );
             hits.space_agents
@@ -216,6 +216,7 @@ pub(crate) fn render_sidebar(
             selected,
             state.selected_workspace_id.is_some(),
             dragged,
+            config.indents.space_padding,
             palette,
         );
         let group_toggle = render_parent_group_toggle(
