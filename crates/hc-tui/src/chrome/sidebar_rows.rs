@@ -261,6 +261,12 @@ pub(crate) fn workspace_rows(
                 snapshot,
                 &workspace.workspace_id,
             ),
+            labels: snapshot
+                .panes
+                .iter()
+                .filter(|pane| pane.workspace_id == workspace.workspace_id)
+                .map(|pane| pane.labels.as_slice())
+                .collect(),
             tokens: &token_values,
             suppress_git_details: indented,
         },

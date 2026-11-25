@@ -115,6 +115,8 @@ pub struct ClientShellPane {
     pub foreground_cwd: Option<String>,
     pub focused: bool,
     pub right_click_passthrough: bool,
+    /// The terminal's labels (`hc label`), for the `label` sidebar token.
+    pub labels: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `label` sidebar token for `[ui.sidebar.spaces]` and `[ui.sidebar.agents]`
+  rows: shows a terminal label (`hc label`), optionally mapped to a symbol,
+  for example `{ token = "label", name = "just-doc", map = { live = "◇" } }`.
+  A space row picks a value of its terminals by `priority`.
 - `[[keys.command]]` `machine = "local"` (default `"focused"`): a `shell`
   command runs on this computer instead of the focused pane's machine.
   `HC_FOCUSED_TERMINAL` and `HC_FOCUSED_MACHINE` still name the focused pane.

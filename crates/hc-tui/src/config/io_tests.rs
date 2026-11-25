@@ -610,3 +610,34 @@ fn show_last_agent_defaults_off_and_parses() {
     assert!(loaded.config.ui.sidebar.spaces.show_last_agent);
     assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
 }
+
+#[test]
+fn the_label_token_parses_and_rejects_bad_use() {
+    use crate::config::{AgentSidebarToken as A, SpaceSidebarToken as S};
+    let loaded = load_text(
+        "[ui.sidebar.agents]\nrows = [[{ token = 'label', name = 'just-doc', map = { live = '◇' }, map_only = true, dim = true, format = '[{}]', separator = ' ' }]]\n[ui.sidebar.spaces]\nrows = [[{ token = 'label', name = 'just-doc', priority = ['waiting', 'live'], rules = [{ equals = 'waiting', bold = true }] }]]\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let agent = &loaded.config.ui.sidebar.agents.rows[0][0];
+    let A::Label(label) = agent.parts().0 else {
+        panic!("{agent:?}");
+    };
+    assert_eq!(label.name, "just-doc");
+    assert_eq!(label.display("live").as_deref(), Some("◇"));
+    assert_eq!(label.display("other"), None);
+    let space = &loaded.config.ui.sidebar.spaces.rows[0][0];
+    let S::Label(label) = space.parts().0 else {
+        panic!("{space:?}");
+    };
+    assert_eq!(label.pick(&["live", "waiting"]), Some("waiting"));
+    assert_eq!(label.display("waiting").as_deref(), Some("waiting"));
+    for bad in [
+        "[ui.sidebar.spaces]\nrows = [['label']]\n",
+        "[ui.sidebar.spaces]\nrows = [[{ token = 'label' }]]\n",
+        "[ui.sidebar.spaces]\nrows = [[{ token = 'label', name = 'x', colour = 'red' }]]\n",
+        "[ui.sidebar.spaces]\nrows = [[{ token = 'workspace', name = 'x' }]]\n",
+        "[ui.sidebar.agents]\nrows = [[{ token = 'label', name = 'x', priority = ['a'] }]]\n",
+    ] {
+        assert!(!load_text(bad).diagnostics.is_empty(), "{bad}");
+    }
+}

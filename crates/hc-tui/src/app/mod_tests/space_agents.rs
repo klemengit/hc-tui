@@ -653,3 +653,106 @@ async fn the_cursor_enters_a_space_on_its_last_agent_with_show_last_agent() {
     // t1 is focused, so it is the last one; the default would be t2.
     assert_eq!(app.navigate_agent.as_deref(), Some("t1"));
 }
+
+// ---- `label` token ----
+
+fn labelled(mut term: hc_proto::terminal::Terminal, value: &str) -> hc_proto::terminal::Terminal {
+    term.labels.insert("just-doc".into(), value.into());
+    term
+}
+
+fn label_app(terms: Vec<hc_proto::terminal::Terminal>, config: &str) -> App {
+    let mut app = app_with_terms(terms);
+    let dir = crate::test_support::TestDir::new("hctui-label-token");
+    let path = dir.join("config.toml");
+    std::fs::write(&path, config).unwrap();
+    let loaded = crate::config::load(&path);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    app.shell.spaces = loaded.config.ui.sidebar.spaces;
+    app.shell.agents = loaded.config.ui.sidebar.agents;
+    app.shell.spaces.agents = SpaceAgentsConfig::All;
+    app.shell.agent_panel = false;
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    pending_attach(&mut app);
+    app
+}
+
+const LABEL_ON_AGENTS: &str = "[ui.sidebar.agents]\nrows = [['agent', { token = 'label', name = 'just-doc', map = { live = 'LIVE', waiting = 'WAIT' } }]]\n";
+
+#[tokio::test]
+async fn the_label_token_shows_the_mapped_value_on_an_agent_row() {
+    let mut app = label_app(
+        vec![
+            labelled(named("t1", "idle", "one", "alpha"), "live"),
+            labelled(named("t2", "idle", "one", "beta"), "other"),
+            named("t3", "idle", "one", "gamma"),
+        ],
+        LABEL_ON_AGENTS,
+    );
+    let lines = sidebar(&mut app);
+    let (_, alpha) = line_of(&lines, "alpha").unwrap();
+    let (_, beta) = line_of(&lines, "beta").unwrap();
+    let (_, gamma) = line_of(&lines, "gamma").unwrap();
+    assert!(alpha.contains("alpha · LIVE"), "{alpha}");
+    // Not in the map: the raw value.
+    assert!(beta.contains("beta · other"), "{beta}");
+    // No label: nothing, not even the separator.
+    assert!(!gamma.contains('·'), "{gamma}");
+}
+
+#[tokio::test]
+async fn map_only_hides_a_value_not_in_the_map() {
+    let mut app = label_app(
+        vec![labelled(named("t1", "idle", "one", "alpha"), "other")],
+        "[ui.sidebar.agents]\nrows = [['agent', { token = 'label', name = 'just-doc', map = { live = 'LIVE' }, map_only = true }]]\n",
+    );
+    let lines = sidebar(&mut app);
+    let (_, alpha) = line_of(&lines, "alpha").unwrap();
+    assert!(!alpha.contains('·') && !alpha.contains("other"), "{alpha}");
+}
+
+#[tokio::test]
+async fn a_space_shows_the_first_priority_value_of_its_terminals() {
+    let config = "[ui.sidebar.spaces]\nrows = [['workspace', { token = 'label', name = 'just-doc', map = { live = 'LIVE', waiting = 'WAIT' }, priority = ['waiting', 'live'] }]]\n";
+    let mut app = label_app(
+        vec![
+            labelled(named("t1", "idle", "one", "alpha"), "live"),
+            labelled(named("t2", "idle", "one", "beta"), "waiting"),
+            labelled(named("t3", "idle", "two", "gamma"), "live"),
+            named("t4", "idle", "three", "delta"),
+        ],
+        config,
+    );
+    let lines = sidebar(&mut app);
+    let (_, one) = line_of(&lines, " one").unwrap();
+    let (_, two) = line_of(&lines, " two").unwrap();
+    let (_, three) = line_of(&lines, " three").unwrap();
+    assert!(one.contains("one · WAIT"), "{one}");
+    assert!(two.contains("two · LIVE"), "{two}");
+    assert!(!three.contains('·'), "{three}");
+}
+
+#[tokio::test]
+async fn the_label_token_reads_a_remote_terminals_labels() {
+    let mut app = app_multi(
+        vec![
+            named("t1", "idle", "one", "alpha"),
+            labelled(named("host-a/t3", "idle", "three", "remote"), "live"),
+        ],
+        vec![machine("host-a", "connected")],
+    );
+    let dir = crate::test_support::TestDir::new("hctui-label-remote");
+    let path = dir.join("config.toml");
+    std::fs::write(&path, LABEL_ON_AGENTS).unwrap();
+    let loaded = crate::config::load(&path);
+    app.shell.agents = loaded.config.ui.sidebar.agents;
+    app.shell.spaces.agents = SpaceAgentsConfig::All;
+    app.shell.agent_panel = false;
+    pending_attach(&mut app);
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    let lines = sidebar(&mut app);
+    let (_, remote) = line_of(&lines, "remote").expect("remote agent row");
+    assert!(remote.contains("remote · LIVE"), "{remote}");
+}

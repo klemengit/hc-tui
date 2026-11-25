@@ -114,6 +114,8 @@ pub enum AgentSidebarToken {
     Agent,
     TerminalTitle,
     TerminalTitleStripped,
+    /// hc-tui's own token: a label of the agent's terminal.
+    Label(SidebarLabelToken),
     Custom(String),
     Styled {
         token: Box<AgentSidebarToken>,
@@ -141,6 +143,38 @@ impl SidebarTokenLayout {
     }
 }
 
+/// hc-tui only: the `label` token, a terminal label (`hc label t12
+/// key=value`) shown on a row. `map` replaces a value by its text; with
+/// `map_only` a value not in `map` is hidden. `priority` (space rows only)
+/// picks which value of the space's terminals is shown.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SidebarLabelToken {
+    pub name: String,
+    pub map: BTreeMap<String, String>,
+    pub map_only: bool,
+    pub priority: Vec<String>,
+}
+
+impl SidebarLabelToken {
+    /// The text shown for a raw label value, or `None` when hidden.
+    pub fn display(&self, value: &str) -> Option<String> {
+        match self.map.get(value) {
+            Some(text) => Some(text.clone()),
+            None if self.map_only => None,
+            None => Some(value.to_owned()),
+        }
+    }
+
+    /// The value a space shows: the first `priority` value any of its
+    /// terminals has, else the first terminal's value.
+    pub fn pick<'a>(&self, values: &[&'a str]) -> Option<&'a str> {
+        self.priority
+            .iter()
+            .find_map(|wanted| values.iter().copied().find(|value| value == wanted))
+            .or_else(|| values.first().copied())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SpaceSidebarToken {
     StateIcon,
@@ -150,6 +184,8 @@ pub enum SpaceSidebarToken {
     GitStatus,
     /// hc-tui's own token: the number of agents in the space.
     AgentCount,
+    /// hc-tui's own token: a label of the space's terminals.
+    Label(SidebarLabelToken),
     Custom(String),
     Styled {
         token: Box<SpaceSidebarToken>,
@@ -221,6 +257,14 @@ struct RawStyledSidebarToken {
     format: Option<String>,
     #[serde(default)]
     separator: Option<String>,
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    map: Option<BTreeMap<String, String>>,
+    #[serde(default)]
+    map_only: Option<bool>,
+    #[serde(default)]
+    priority: Option<Vec<String>>,
 }
 
 type RawParts = (
@@ -228,6 +272,7 @@ type RawParts = (
     Option<SidebarTokenStyle>,
     Vec<SidebarTokenRule>,
     SidebarTokenLayout,
+    Option<SidebarLabelToken>,
 );
 
 #[derive(Deserialize)]
@@ -240,7 +285,12 @@ enum RawSidebarToken {
 impl RawSidebarToken {
     fn parts(self) -> Result<RawParts, String> {
         match self {
-            Self::Plain(token) => Ok((token, None, Vec::new(), SidebarTokenLayout::default())),
+            Self::Plain(token) if token == "label" => {
+                Err("sidebar token `label` requires `name`".into())
+            }
+            Self::Plain(token) => {
+                Ok((token, None, Vec::new(), SidebarTokenLayout::default(), None))
+            }
             Self::Styled(token) => {
                 if token.rules.len() > 16 {
                     return Err("sidebar tokens may contain at most 16 rules".into());
@@ -258,6 +308,30 @@ impl RawSidebarToken {
                         return Err("sidebar format must contain exactly one `{}`".into());
                     }
                 }
+                let label = if token.token == "label" {
+                    let name = token
+                        .name
+                        .filter(|name| !name.is_empty())
+                        .ok_or("sidebar token `label` requires `name`")?;
+                    Some(SidebarLabelToken {
+                        name,
+                        map: token.map.unwrap_or_default(),
+                        map_only: token.map_only.unwrap_or(false),
+                        priority: token.priority.unwrap_or_default(),
+                    })
+                } else {
+                    if token.name.is_some()
+                        || token.map.is_some()
+                        || token.map_only.is_some()
+                        || token.priority.is_some()
+                    {
+                        return Err(
+                            "`name`, `map`, `map_only` and `priority` belong to the `label` token"
+                                .into(),
+                        );
+                    }
+                    None
+                };
                 Ok((
                     token.token,
                     Some(SidebarTokenStyle {
@@ -270,6 +344,7 @@ impl RawSidebarToken {
                         format: token.format,
                         separator: token.separator,
                     },
+                    label,
                 ))
             }
         }
@@ -310,9 +385,22 @@ impl<'de> Deserialize<'de> for AgentSidebarToken {
     where
         D: serde::Deserializer<'de>,
     {
-        let (value, style, rules, layout) = RawSidebarToken::deserialize(deserializer)?
+        let (value, style, rules, layout, label) = RawSidebarToken::deserialize(deserializer)?
             .parts()
             .map_err(serde::de::Error::custom)?;
+        if let Some(label) = label {
+            if !label.priority.is_empty() {
+                return Err(serde::de::Error::custom(
+                    "`priority` of the `label` token applies to space rows only",
+                ));
+            }
+            return Ok(Self::Styled {
+                token: Box::new(Self::Label(label)),
+                style: style.unwrap_or_default(),
+                rules,
+                layout,
+            });
+        }
         let token = parse_sidebar_token(
             value,
             &[
@@ -348,9 +436,17 @@ impl<'de> Deserialize<'de> for SpaceSidebarToken {
     where
         D: serde::Deserializer<'de>,
     {
-        let (value, style, rules, layout) = RawSidebarToken::deserialize(deserializer)?
+        let (value, style, rules, layout, label) = RawSidebarToken::deserialize(deserializer)?
             .parts()
             .map_err(serde::de::Error::custom)?;
+        if let Some(label) = label {
+            return Ok(Self::Styled {
+                token: Box::new(Self::Label(label)),
+                style: style.unwrap_or_default(),
+                rules,
+                layout,
+            });
+        }
         let token = parse_sidebar_token(
             value,
             &[

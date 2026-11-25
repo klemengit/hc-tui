@@ -157,6 +157,11 @@ pub(super) fn structured_snapshot_from_spaces(
                     foreground_cwd: term.foreground.as_ref().map(|fg| clean(&fg.cwd)),
                     focused,
                     right_click_passthrough: false,
+                    labels: term
+                        .labels
+                        .iter()
+                        .map(|(key, value)| (key.clone(), clean(value)))
+                        .collect(),
                 });
                 if is_agent(term) {
                     let record = selection.and_then(|selected| selected.status(term));

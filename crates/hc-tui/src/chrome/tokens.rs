@@ -1,8 +1,8 @@
 // Derived from herdr src/ui/sidebar/tokens.rs (Apache-2.0).
 
 use crate::config::{
-    AgentSidebarToken, AgentsSidebarConfig, SidebarTokenLayout, SidebarTokenStyle,
-    SpaceSidebarToken, SpacesSidebarConfig,
+    AgentSidebarToken, AgentsSidebarConfig, SidebarLabelToken, SidebarTokenLayout,
+    SidebarTokenStyle, SpaceSidebarToken, SpacesSidebarConfig,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +26,7 @@ pub(crate) enum ResolvedTokenKind {
     Branch(String),
     GitStatus { ahead: usize, behind: usize },
     AgentCount(String),
+    Label(String),
     Custom(String),
 }
 
@@ -43,6 +44,7 @@ impl ResolvedTokenKind {
             Self::TerminalTitle(_) => Self::TerminalTitle(text),
             Self::Branch(_) => Self::Branch(text),
             Self::AgentCount(_) => Self::AgentCount(text),
+            Self::Label(_) => Self::Label(text),
             Self::Custom(_) => Self::Custom(text),
             other => other,
         }
@@ -59,6 +61,7 @@ impl ResolvedTokenKind {
             | Self::TerminalTitle(value)
             | Self::Branch(value)
             | Self::AgentCount(value)
+            | Self::Label(value)
             | Self::Custom(value) => Some(value),
             Self::StateIcon | Self::GitStatus { .. } => None,
         }
@@ -100,6 +103,27 @@ pub(crate) struct AgentTokenContext<'a> {
     pub(crate) terminal_title_stripped: Option<&'a str>,
     pub(crate) canonical_agent: Option<crate::chrome::detect::Agent>,
     pub(crate) tokens: &'a std::collections::HashMap<String, String>,
+    /// The labels of the agent's terminal.
+    pub(crate) labels: &'a [(String, String)],
+}
+
+/// A `label` token's shown text and the raw value its rules match.
+fn label_kind(label: &SidebarLabelToken, values: &[&str]) -> Option<(ResolvedTokenKind, String)> {
+    let raw = label.pick(values)?;
+    let text = label.display(raw)?;
+    Some((ResolvedTokenKind::Label(text), raw.to_owned()))
+}
+
+fn label_values<'a>(labels: &[&'a [(String, String)]], name: &str) -> Vec<&'a str> {
+    labels
+        .iter()
+        .filter_map(|terminal| {
+            terminal
+                .iter()
+                .find(|(key, _)| key == name)
+                .map(|(_, value)| value.as_str())
+        })
+        .collect()
 }
 
 pub(crate) fn agent_rows(
@@ -141,6 +165,14 @@ pub(crate) fn agent_rows(
                         AgentSidebarToken::TerminalTitleStripped => context
                             .terminal_title_stripped
                             .map(|value| ResolvedTokenKind::TerminalTitle(value.to_string())),
+                        AgentSidebarToken::Label(label) => {
+                            let (kind, raw) =
+                                label_kind(label, &label_values(&[context.labels], &label.name))?;
+                            let style = configured.style_for_value(&raw)?;
+                            return Some(
+                                ResolvedToken::new(kind, style).laid_out(configured.layout()),
+                            );
+                        }
                         AgentSidebarToken::Custom(name) => context
                             .tokens
                             .get(name)
@@ -166,6 +198,8 @@ pub(crate) struct SpaceTokenContext<'a> {
     pub(crate) ahead_behind: Option<(usize, usize)>,
     /// Every agent of the space, idle included.
     pub(crate) agent_count: usize,
+    /// The labels of each terminal of the space, in display order.
+    pub(crate) labels: Vec<&'a [(String, String)]>,
     pub(crate) tokens: &'a std::collections::HashMap<String, String>,
     pub(crate) suppress_git_details: bool,
 }
@@ -202,6 +236,14 @@ pub(crate) fn space_rows(
                         SpaceSidebarToken::AgentCount => (context.agent_count > 0).then(|| {
                             ResolvedTokenKind::AgentCount(context.agent_count.to_string())
                         }),
+                        SpaceSidebarToken::Label(label) => {
+                            let (kind, raw) =
+                                label_kind(label, &label_values(&context.labels, &label.name))?;
+                            let style = configured.style_for_value(&raw)?;
+                            return Some(
+                                ResolvedToken::new(kind, style).laid_out(configured.layout()),
+                            );
+                        }
                         SpaceSidebarToken::Custom(name) => context
                             .tokens
                             .get(name)
