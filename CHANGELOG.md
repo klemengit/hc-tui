@@ -22,6 +22,9 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[keys] navigate_enter_single` (default `"enter"`): `"jump"` makes
+  `navigate_enter` on a space with exactly one agent focus that agent and leave
+  navigate mode.
 - Styled sidebar tokens take `format` (one `{}`, for example `"({})"`) and
   `separator` (the text drawn before the token). A narrow row clips the name
   before an `agent_count`. See docs/sidebar.md.

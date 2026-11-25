@@ -218,11 +218,19 @@ impl App {
                 return;
             }
             Enter if self.tree_navigation() => {
-                if self.navigate_agent.is_none()
-                    && let Some(first) = self.navigate_space_agents().into_iter().next()
-                {
-                    self.navigate_agent = Some(first);
-                    self.shell_state.reveal_navigation_workspace = true;
+                if self.navigate_agent.is_none() {
+                    let agents = self.navigate_space_agents();
+                    let jump = agents.len() == 1
+                        && self.live.keybinds.navigate.enter_single
+                            == crate::config::NavigateEnterSingle::Jump;
+                    if let Some(first) = agents.into_iter().next() {
+                        self.navigate_agent = Some(first);
+                        self.shell_state.reveal_navigation_workspace = true;
+                        if jump {
+                            self.on_navigate(Accept);
+                            return;
+                        }
+                    }
                 }
             }
             Leave if self.tree_navigation() => {

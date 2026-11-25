@@ -476,3 +476,20 @@ fn token_format_and_separator_parse_and_reject_bad_use() {
         assert!(!loaded.diagnostics.is_empty(), "{bad}");
     }
 }
+
+#[test]
+fn navigate_enter_single_defaults_to_enter_and_parses_jump() {
+    use crate::config::NavigateEnterSingle as N;
+    assert_eq!(
+        load_text("[keys]\nnavigate_tree = true\n")
+            .config
+            .keys
+            .navigate_enter_single,
+        N::Enter
+    );
+    let loaded = load_text("[keys]\nnavigate_enter_single = 'jump'\n");
+    assert_eq!(loaded.config.keys.navigate_enter_single, N::Jump);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let loaded = load_text("[keys]\nnavigate_enter_single = 'zap'\n");
+    assert!(!loaded.diagnostics.is_empty());
+}

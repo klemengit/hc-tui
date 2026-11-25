@@ -235,6 +235,8 @@ pub struct NavigateKeybinds {
     /// hc-tui's `keys.navigate_tree`: the tree walk is on, so `enter`,
     /// `leave` and the pane up/down keys also steer navigate mode.
     pub tree: bool,
+    /// hc-tui's `keys.navigate_enter_single`.
+    pub enter_single: super::NavigateEnterSingle,
     /// hc-tui's `keys.navigate_enter`: open the space under the cursor.
     pub enter: ActionKeybinds,
     /// hc-tui's `keys.navigate_leave`: close the open space.

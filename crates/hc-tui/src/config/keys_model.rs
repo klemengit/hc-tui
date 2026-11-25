@@ -97,6 +97,7 @@ pub struct KeysConfigOverlay {
     pub navigate_pane_up: Option<BindingConfig>,
     pub navigate_pane_right: Option<BindingConfig>,
     pub navigate_tree: Option<bool>,
+    pub navigate_enter_single: Option<NavigateEnterSingle>,
     pub navigate_enter: Option<BindingConfig>,
     pub navigate_leave: Option<BindingConfig>,
     pub navigate_next_machine: Option<BindingConfig>,
@@ -175,6 +176,9 @@ pub struct KeysConfig {
     /// agents, with `navigate_enter` / `navigate_leave` opening and closing
     /// a space. Default: false.
     pub navigate_tree: bool,
+    /// hc-tui's own key: what the open key does on a space with exactly one
+    /// agent. Default: `enter` (open it); `jump` focuses the agent.
+    pub navigate_enter_single: NavigateEnterSingle,
     /// hc-tui's own key: open the space under the cursor (tree navigation).
     pub navigate_enter: BindingConfig,
     /// hc-tui's own key: close the open space (tree navigation).
@@ -256,6 +260,7 @@ impl Default for KeysConfig {
             navigate_pane_up: BindingConfig::one("k"),
             navigate_pane_right: BindingConfig::one("l"),
             navigate_tree: false,
+            navigate_enter_single: NavigateEnterSingle::Enter,
             navigate_enter: BindingConfig::one("l"),
             navigate_leave: BindingConfig::one("h"),
             navigate_next_machine: BindingConfig::one("shift+j"),
@@ -308,6 +313,17 @@ impl Default for KeysConfig {
             command: Vec::new(),
         }
     }
+}
+
+/// `keys.navigate_enter_single`: the open key on a space with one agent.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum NavigateEnterSingle {
+    /// Open the space (today's behaviour).
+    #[default]
+    Enter,
+    /// Focus the agent and leave navigate mode.
+    Jump,
 }
 
 impl KeysConfig {
@@ -371,6 +387,7 @@ impl<'de> Deserialize<'de> for KeysConfig {
         apply_field!(navigate_pane_up);
         apply_field!(navigate_pane_right);
         apply_field!(navigate_tree);
+        apply_field!(navigate_enter_single);
         apply_field!(navigate_enter);
         apply_field!(navigate_leave);
         apply_field!(navigate_next_machine);

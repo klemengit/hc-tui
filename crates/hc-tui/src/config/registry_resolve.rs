@@ -30,6 +30,7 @@ impl Config {
                 pane_up: ActionKeybinds::default(),
                 pane_right: ActionKeybinds::default(),
                 tree: self.keys.navigate_tree,
+                enter_single: self.keys.navigate_enter_single,
                 enter: ActionKeybinds::default(),
                 leave: ActionKeybinds::default(),
                 next_machine: ActionKeybinds::default(),

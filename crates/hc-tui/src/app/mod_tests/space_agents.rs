@@ -488,6 +488,37 @@ async fn the_goal_row_shows_the_count_in_parentheses_only_above_one() {
 }
 
 #[tokio::test]
+async fn the_open_key_on_a_single_agent_space_opens_it_by_default() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    press_key(&mut app, 'j');
+    press_key(&mut app, 'l');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t3"));
+    assert_eq!(app.mode, Mode::Navigate);
+    assert_eq!(app.focused.as_deref(), Some("t1"));
+}
+
+#[tokio::test]
+async fn jump_focuses_the_only_agent_and_leaves_navigate_mode() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    app.live.keybinds.navigate.enter_single = crate::config::NavigateEnterSingle::Jump;
+    press_key(&mut app, 'j');
+    press_key(&mut app, 'l');
+    assert_eq!(app.focused.as_deref(), Some("t3"));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.navigate_agent.is_none());
+    assert!(app.navigate_target.is_none());
+}
+
+#[tokio::test]
+async fn jump_still_opens_a_space_with_several_agents() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    app.live.keybinds.navigate.enter_single = crate::config::NavigateEnterSingle::Jump;
+    press_key(&mut app, 'l');
+    assert_eq!(app.navigate_agent.as_deref(), Some("t2"));
+    assert_eq!(app.mode, Mode::Navigate);
+}
+
+#[tokio::test]
 async fn the_open_key_on_an_agent_focuses_it_like_enter() {
     let mut app = tree_app(SpaceAgentsConfig::None);
     press_key(&mut app, 'l');
