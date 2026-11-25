@@ -19,6 +19,7 @@ fn command(action: CustomCommandAction, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
         layout: Default::default(),
         screen: false,
+        local: false,
         bindings: Default::default(),
         label: "alt+f".into(),
         command: line.into(),

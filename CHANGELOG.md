@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[[keys.command]]` `machine = "local"` (default `"focused"`): a `shell`
+  command runs on this computer instead of the focused pane's machine.
+  `HC_FOCUSED_TERMINAL` and `HC_FOCUSED_MACHINE` still name the focused pane.
+  Other types ignore it with a diagnostic.
 - `[ui.sidebar.spaces] show_last_agent` (default `false`): a space with two
   or more agents always lists the agent focused there last, and tree
   navigation starts the cursor on it.

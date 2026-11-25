@@ -333,6 +333,9 @@ pub struct CustomCommandKeybind {
     pub layout: crate::popup_size::PopupLayout,
     /// hc-tui only: hand the command the focused pane's coloured screen.
     pub screen: bool,
+    /// hc-tui only, shell: run on this computer, not on the machine of the
+    /// focused pane.
+    pub local: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

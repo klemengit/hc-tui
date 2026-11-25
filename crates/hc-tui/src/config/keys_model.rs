@@ -29,6 +29,9 @@ pub struct CommandKeybindConfig {
     /// hc-tui only: write the focused pane's visible screen as an ANSI
     /// file and pass its path in `HC_FOCUSED_SCREEN`.
     pub screen: Option<bool>,
+    /// hc-tui only, shell: `"focused"` (default) runs on the focused pane's
+    /// machine, `"local"` on this computer.
+    pub machine: Option<String>,
 }
 
 impl CommandKeybindConfig {}
@@ -46,6 +49,7 @@ impl Default for CommandKeybindConfig {
             placement: None,
             border: None,
             screen: None,
+            machine: None,
         }
     }
 }

@@ -474,6 +474,17 @@ fn append_custom_command_bindings(
             ));
             screen = false;
         }
+        let mut local = false;
+        match command.machine.as_deref() {
+            None | Some("focused") => {}
+            Some("local") if action == CustomCommandAction::Shell => local = true,
+            Some("local") => diagnostics.push(format!(
+                "machine on a non-shell custom command: keys.command[{index}]; ignoring machine"
+            )),
+            Some(other) => diagnostics.push(format!(
+                "invalid machine {other:?} on keys.command[{index}]; expected \"focused\" or \"local\""
+            )),
+        }
         let label = bindings.label().unwrap_or_else(|| "unset".to_string());
         keybinds.custom_commands.push(CustomCommandKeybind {
             bindings,
@@ -486,6 +497,7 @@ fn append_custom_command_bindings(
             persistent,
             layout,
             screen,
+            local,
         });
     }
 }

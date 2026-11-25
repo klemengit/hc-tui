@@ -13,6 +13,7 @@ pub(super) fn command_labeled(label: &str, line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
         layout: Default::default(),
         screen: false,
+        local: false,
         bindings: Default::default(),
         label: label.into(),
         command: line.into(),
@@ -32,6 +33,7 @@ pub(super) fn ephemeral(line: &str) -> CustomCommandKeybind {
     CustomCommandKeybind {
         layout: Default::default(),
         screen: false,
+        local: false,
         label: "alt+h".into(),
         persistent: false,
         ..command(line)

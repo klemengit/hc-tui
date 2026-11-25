@@ -12,6 +12,7 @@ fn command_labeled(label: &str, persistent: bool) -> CustomCommandKeybind {
     CustomCommandKeybind {
         layout: Default::default(),
         screen: false,
+        local: false,
         bindings: Default::default(),
         label: label.into(),
         command: "exec \"${SHELL:-sh}\"".into(),

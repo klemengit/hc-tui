@@ -514,6 +514,33 @@ fn screen_defaults_off_and_parses() {
 }
 
 #[test]
+fn machine_defaults_to_focused_and_parses_local() {
+    let machines = |action: &str, extra: &str| {
+        let loaded = load_text(&format!(
+            "[[keys.command]]\nkey = 'alt+h'\ntype = '{action}'\ncommand = 'x'\n{extra}\n"
+        ));
+        let (live, diagnostics) = loaded.config.live_keybinds_with_diagnostics().unwrap();
+        (live.keybinds.custom_commands[0].local, diagnostics)
+    };
+    assert_eq!(machines("shell", ""), (false, vec![]));
+    assert_eq!(machines("shell", "machine = 'focused'"), (false, vec![]));
+    assert_eq!(machines("shell", "machine = 'local'"), (true, vec![]));
+    // A bad value and a non-shell type keep the default, with a diagnostic.
+    for (action, extra) in [
+        ("shell", "machine = 'elsewhere'"),
+        ("popup", "machine = 'local'"),
+        ("pane", "machine = 'local'"),
+    ] {
+        let (local, diagnostics) = machines(action, extra);
+        assert!(!local, "{action} {extra}");
+        assert!(
+            diagnostics.iter().any(|d| d.contains("machine")),
+            "{action} {extra}: {diagnostics:?}"
+        );
+    }
+}
+
+#[test]
 fn token_format_and_separator_parse_and_reject_bad_use() {
     use crate::config::SpaceSidebarToken as T;
     let loaded = load_text(
