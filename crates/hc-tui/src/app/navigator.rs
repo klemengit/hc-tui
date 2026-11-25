@@ -128,6 +128,40 @@ impl App {
         }
     }
 
+    /// hc-tui's `navigate_next_machine` / `navigate_prev_machine` in the
+    /// overlay: like `move_navigator_workspace`, hop to the next or
+    /// previous machine row, without wrapping. Single-machine lists have
+    /// no machine rows, so nothing moves.
+    fn move_navigator_machine(&mut self, forward: bool) {
+        let Some(navigator) = self.navigator.as_mut() else {
+            return;
+        };
+        let rows = navigator_rows(
+            &self.projection.endpoints,
+            &self.projection.active_endpoint_id,
+            navigator,
+        );
+        let Some(selected) = navigator_selected_index(&rows, navigator) else {
+            return;
+        };
+        let is_machine = |row: &NavigatorRow| matches!(row.target, NavigatorTarget::Machine { .. });
+        let section = rows[..=selected].iter().rposition(is_machine);
+        let destination = if forward {
+            rows.iter()
+                .enumerate()
+                .skip(selected + 1)
+                .find(|(_, row)| is_machine(row))
+        } else {
+            rows.iter()
+                .enumerate()
+                .take(section.unwrap_or(0))
+                .rfind(|(_, row)| is_machine(row))
+        };
+        if let Some((_, row)) = destination {
+            navigator.selected = Some(row.target.clone());
+        }
+    }
+
     /// `accept_navigator_selection`: activate the selected row —
     /// machines switch the endpoint, workspaces/panes focus their
     /// terminal. Offline remote endpoints report unavailable and keep
@@ -234,6 +268,20 @@ impl App {
                 self.move_navigator_selection(1);
                 return;
             }
+            return;
+        }
+        let machine_key = {
+            let nav = &self.live.keybinds.navigate;
+            if nav.next_machine.matches_direct_key(&combo) {
+                Some(true)
+            } else if nav.prev_machine.matches_direct_key(&combo) {
+                Some(false)
+            } else {
+                None
+            }
+        };
+        if let Some(forward) = machine_key {
+            self.move_navigator_machine(forward);
             return;
         }
         if matches!(code, KeyCode::Left | KeyCode::Right) && modifiers.is_empty() {

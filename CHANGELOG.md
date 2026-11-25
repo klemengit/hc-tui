@@ -68,7 +68,8 @@ All notable changes to hc-tui are documented here. The format follows
   focuses it.
 - `[keys] navigate_next_machine` (`"shift+j"`) and `navigate_prev_machine`
   (`"shift+k"`): with `navigate_tree`, jump to the first space of the
-  next / current-then-previous machine, wrapping at the ends.
+  next / current-then-previous machine, wrapping at the ends. The keys also
+  jump between machines in the Go to list (no wrap), and its key help shows them.
 
 ## 0.1.19 — 2026-11-24
 

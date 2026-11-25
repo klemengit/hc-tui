@@ -406,3 +406,70 @@ async fn typed_text_never_leaks_to_the_pane_while_open() {
     app.on_input(input::UiEvent::Paste(b"work".to_vec()), 120);
     assert_eq!(app.navigator.as_ref().unwrap().query.as_str(), "work");
 }
+
+fn shift_key(app: &mut App, c: char) {
+    app.on_input(
+        input::UiEvent::Key(term_key(Key::Char(c), Mods::SHIFT, Action::Press)),
+        120,
+    );
+}
+
+fn machine_of(app: &App) -> Option<ClientEndpointId> {
+    match app.navigator.as_ref().unwrap().selected.as_ref()? {
+        NavigatorTarget::Machine { endpoint_id } => Some(endpoint_id.clone()),
+        _ => None,
+    }
+}
+
+#[tokio::test]
+async fn shift_j_and_k_jump_between_machine_rows_without_wrapping() {
+    let mut app = super::endpoint_nav::two_machine_app();
+    super::endpoint_nav::pending_attach(&mut app);
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    open(&mut app);
+    // Rows: local, one, t1, two, t2, host-a, three, t3, four, t4.
+    shift_key(&mut app, 'j');
+    assert_eq!(
+        machine_of(&app),
+        Some(super::endpoint_nav::remote("host-a"))
+    );
+    // No machine after the last one: stays.
+    shift_key(&mut app, 'j');
+    assert_eq!(
+        machine_of(&app),
+        Some(super::endpoint_nav::remote("host-a"))
+    );
+    shift_key(&mut app, 'k');
+    assert_eq!(machine_of(&app), Some(ClientEndpointId::Local));
+    // From a pane inside the second machine, K goes to the previous machine.
+    key(&mut app, Key::End);
+    shift_key(&mut app, 'k');
+    assert_eq!(machine_of(&app), Some(ClientEndpointId::Local));
+    // The footer names the keys.
+    assert!(
+        screen(&mut app)
+            .iter()
+            .any(|l| l.contains("shift+j/shift+k machine"))
+    );
+}
+
+#[tokio::test]
+async fn machine_keys_are_inert_in_search_and_with_one_machine() {
+    let mut app = app_nav();
+    open(&mut app);
+    let before = app.navigator.as_ref().unwrap().selected.clone();
+    shift_key(&mut app, 'j');
+    shift_key(&mut app, 'k');
+    assert_eq!(app.navigator.as_ref().unwrap().selected, before);
+    assert!(!screen(&mut app).iter().any(|l| l.contains(" machine ·")));
+    let mut app = super::endpoint_nav::two_machine_app();
+    super::endpoint_nav::pending_attach(&mut app);
+    app.focused = Some("t1".into());
+    app.refresh_projection();
+    open(&mut app);
+    key(&mut app, Key::Char('/'));
+    shift_key(&mut app, 'j');
+    assert!(app.navigator.as_ref().unwrap().search_focused);
+    assert_eq!(app.navigator.as_ref().unwrap().query.as_str(), "j");
+}

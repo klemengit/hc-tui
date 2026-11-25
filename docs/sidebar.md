@@ -217,8 +217,8 @@ with the collapsed sidebar navigate mode stays flat.
 | `[keys] navigate_enter` | `"l"` | Moves the cursor from the space into its agents. The space lists all its agents, idle ones included, while the cursor is inside, even with `agents = "none"`. Does nothing for a space without agents. Pressed again on an agent row, it does what `enter` does: focuses that agent and leaves navigate mode. |
 | `[keys] navigate_enter_single` | `"enter"` | What `navigate_enter` does on a space with exactly one agent. `"enter"` moves the cursor into the space, as for any space. `"jump"` focuses that agent and leaves navigate mode, like `enter` on the agent row. Spaces with several agents or none behave as before. |
 | `[keys] navigate_leave` | `"h"` | Moves the cursor back to the space. The idle agents hide again. |
-| `[keys] navigate_next_machine` | `"shift+j"` | Jumps to the first space of the next machine. |
-| `[keys] navigate_prev_machine` | `"shift+k"` | Jumps to the first space of the current machine; when the cursor is already there, to the first space of the previous machine (like a paragraph motion in vim). |
+| `[keys] navigate_next_machine` | `"shift+j"` | Jumps to the first space of the next machine. Also moves the selection to the next machine row in the Go to list (`prefix+g`), with several machines; it does not wrap, and does nothing while the search line has focus. |
+| `[keys] navigate_prev_machine` | `"shift+k"` | Jumps to the first space of the current machine; when the cursor is already there, to the first space of the previous machine (like a paragraph motion in vim). In the Go to list it moves to the previous machine row. |
 
 With tree navigation on, the cursor starts on a space and the workspace up/down
 keys (`up`/`down`) move between spaces and skip the child agent rows. `j` and

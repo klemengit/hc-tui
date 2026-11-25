@@ -229,12 +229,28 @@ pub(super) fn render_overlays_and_cursor(
         for cell in &mut buf.content {
             cell.modifier = Modifier::from_bits_truncate(cell.modifier.bits() & !0xf000);
         }
+        let machine_keys = format!(
+            "{}/{}",
+            app.live
+                .keybinds
+                .navigate
+                .next_machine
+                .label()
+                .unwrap_or_else(|| "unset".to_owned()),
+            app.live
+                .keybinds
+                .navigate
+                .prev_machine
+                .label()
+                .unwrap_or_else(|| "unset".to_owned()),
+        );
         crate::chrome::navigator_render::render_navigator_overlay(
             buf,
             navigator,
             &app.projection.endpoints,
             &app.projection.active_endpoint_id,
             &app.shell.palette,
+            &machine_keys,
         )
         .unwrap_or_default()
     } else {

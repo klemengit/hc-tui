@@ -44,6 +44,7 @@ pub(crate) fn render_navigator_overlay(
     endpoints: &[ClientShellEndpoint],
     active_endpoint_id: &ClientEndpointId,
     p: &Palette,
+    machine_keys: &str,
 ) -> Option<NavigatorRender> {
     let a = b.area;
     let width = a.width.saturating_sub(4).min(116);
@@ -358,16 +359,22 @@ pub(crate) fn render_navigator_overlay(
             Style::default().fg(p.overlay0).bg(p.panel_bg),
         );
     }
+    let help = if n.search_focused {
+        " search type · move ↑↓/ctrl+n/p · open enter · back esc".to_owned()
+    } else if endpoints.len() > 1 {
+        format!(
+            " ↑↓/j/k rows · ←→ workspace · {machine_keys} machine · / search · a/b/w/i/d filter · enter open · esc close"
+        )
+    } else {
+        " ↑↓/j/k rows · ←→ workspace · / search · a/b/w/i/d filter · enter open · esc close"
+            .to_owned()
+    };
     put_text(
         b,
         i.x,
         i.bottom() - 1,
         i.width,
-        if n.search_focused {
-            " search type · move ↑↓/ctrl+n/p · open enter · back esc"
-        } else {
-            " ↑↓/j/k rows · ←→ workspace · / search · a/b/w/i/d filter · enter open · esc close"
-        },
+        &help,
         Style::default().fg(p.overlay0).bg(p.panel_bg),
     );
     Some(NavigatorRender {
