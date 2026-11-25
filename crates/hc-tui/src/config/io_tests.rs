@@ -451,3 +451,28 @@ fn screen_defaults_off_and_parses() {
     assert!(!screen);
     assert!(!diagnostics.is_empty());
 }
+
+#[test]
+fn token_format_and_separator_parse_and_reject_bad_use() {
+    use crate::config::SpaceSidebarToken as T;
+    let loaded = load_text(
+        "[ui.sidebar.spaces]\nrows = [['workspace', { token = 'agent_count', format = '({})', separator = ' ' }]]\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let layout = loaded.config.ui.sidebar.spaces.rows[0][1].layout().unwrap();
+    assert_eq!(layout.apply("2"), "(2)");
+    assert_eq!(layout.separator.as_deref(), Some(" "));
+    assert!(matches!(
+        &loaded.config.ui.sidebar.spaces.rows[0][0],
+        T::Workspace
+    ));
+    for bad in [
+        "{ token = 'state_icon', format = '[{}]' }",
+        "{ token = 'git_status', format = '[{}]' }",
+        "{ token = 'workspace', format = 'no placeholder' }",
+        "{ token = 'workspace', format = '{} {}' }",
+    ] {
+        let loaded = load_text(&format!("[ui.sidebar.spaces]\nrows = [[{bad}]]\n"));
+        assert!(!loaded.diagnostics.is_empty(), "{bad}");
+    }
+}

@@ -36,7 +36,7 @@ pub use keybinds::{
 };
 pub use sidebar::{
     AgentSidebarToken, AgentsSidebarConfig, SidebarConfig, SidebarIndents, SidebarTokenColor,
-    SidebarTokenStyle, SpaceSidebarToken, SpacesSidebarConfig,
+    SidebarTokenLayout, SidebarTokenStyle, SpaceSidebarToken, SpacesSidebarConfig,
 };
 pub use sound::{AgentSoundOverrides, AgentSoundSetting, SoundConfig};
 pub use theme::{CustomThemeColors, ModeThemeColors, ThemeConfig};

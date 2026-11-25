@@ -233,6 +233,7 @@ pub(crate) fn render_agent_row_indented(
         vec![vec![ResolvedToken {
             kind: ResolvedTokenKind::StateIcon,
             style: Default::default(),
+            separator: None,
         }]]
     } else {
         row.rows.clone()

@@ -1,14 +1,16 @@
 // Derived from herdr src/ui/sidebar/tokens.rs (Apache-2.0).
 
 use crate::config::{
-    AgentSidebarToken, AgentsSidebarConfig, SidebarTokenStyle, SpaceSidebarToken,
-    SpacesSidebarConfig,
+    AgentSidebarToken, AgentsSidebarConfig, SidebarTokenLayout, SidebarTokenStyle,
+    SpaceSidebarToken, SpacesSidebarConfig,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ResolvedToken {
     pub kind: ResolvedTokenKind,
     pub style: SidebarTokenStyle,
+    /// The text drawn before this token, overriding the default.
+    pub separator: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,6 +30,24 @@ pub(crate) enum ResolvedTokenKind {
 }
 
 impl ResolvedTokenKind {
+    /// The same kind with its text replaced (`state_icon` and
+    /// `git_status` carry none and stay as they are).
+    fn with_text(self, text: String) -> Self {
+        match self {
+            Self::StateText(_) => Self::StateText(text),
+            Self::Machine(_) => Self::Machine(text),
+            Self::Workspace(_) => Self::Workspace(text),
+            Self::Tab(_) => Self::Tab(text),
+            Self::Pane(_) => Self::Pane(text),
+            Self::Agent(_) => Self::Agent(text),
+            Self::TerminalTitle(_) => Self::TerminalTitle(text),
+            Self::Branch(_) => Self::Branch(text),
+            Self::AgentCount(_) => Self::AgentCount(text),
+            Self::Custom(_) => Self::Custom(text),
+            other => other,
+        }
+    }
+
     fn text_value(&self) -> Option<&str> {
         match self {
             Self::StateText(value)
@@ -47,7 +67,26 @@ impl ResolvedTokenKind {
 
 impl ResolvedToken {
     fn new(kind: ResolvedTokenKind, style: SidebarTokenStyle) -> Self {
-        Self { kind, style }
+        Self {
+            kind,
+            style,
+            separator: None,
+        }
+    }
+
+    /// Apply a styled token's `format` (after the rules matched the raw
+    /// value) and `separator`.
+    fn laid_out(mut self, layout: Option<&SidebarTokenLayout>) -> Self {
+        let Some(layout) = layout else {
+            return self;
+        };
+        if layout.format.is_some()
+            && let Some(value) = self.kind.text_value().map(str::to_owned)
+        {
+            self.kind = self.kind.with_text(layout.apply(&value));
+        }
+        self.separator = layout.separator.clone();
+        self
     }
 }
 
@@ -112,7 +151,7 @@ pub(crate) fn agent_rows(
                     let style = kind
                         .text_value()
                         .map_or(Some(style), |value| configured.style_for_value(value))?;
-                    Some(ResolvedToken::new(kind, style))
+                    Some(ResolvedToken::new(kind, style).laid_out(configured.layout()))
                 })
                 .collect::<Vec<_>>();
             (!resolved.is_empty()).then_some(resolved)
@@ -173,7 +212,7 @@ pub(crate) fn space_rows(
                     let style = kind
                         .text_value()
                         .map_or(Some(style), |value| configured.style_for_value(value))?;
-                    Some(ResolvedToken::new(kind, style))
+                    Some(ResolvedToken::new(kind, style).laid_out(configured.layout()))
                 })
                 .collect::<Vec<_>>();
             (!resolved.is_empty()).then_some(resolved)
@@ -181,7 +220,10 @@ pub(crate) fn space_rows(
         .collect()
 }
 
-pub(crate) fn separator(previous: &ResolvedToken, current: &ResolvedToken) -> &'static str {
+pub(crate) fn separator<'a>(previous: &ResolvedToken, current: &'a ResolvedToken) -> &'a str {
+    if let Some(separator) = &current.separator {
+        return separator;
+    }
     if matches!(previous.kind, ResolvedTokenKind::StateIcon)
         || matches!(current.kind, ResolvedTokenKind::GitStatus { .. })
     {

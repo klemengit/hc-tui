@@ -22,6 +22,9 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- Styled sidebar tokens take `format` (one `{}`, for example `"({})"`) and
+  `separator` (the text drawn before the token). A narrow row clips the name
+  before an `agent_count`. See docs/sidebar.md.
 - `[[keys.command]]` `screen = true` (default `false`): hc-tui writes the
   focused pane's visible screen, with colours and attributes, to a private
   file and sets `HC_FOCUSED_SCREEN` to its path. Local panes only. The file is

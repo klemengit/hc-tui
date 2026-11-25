@@ -116,7 +116,26 @@ pub enum AgentSidebarToken {
         token: Box<AgentSidebarToken>,
         style: SidebarTokenStyle,
         rules: Vec<SidebarTokenRule>,
+        layout: SidebarTokenLayout,
     },
+}
+
+/// hc-tui only: how a styled token's text is shown. `format` wraps the
+/// text (one `{}`); `separator` is drawn before the token.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SidebarTokenLayout {
+    pub format: Option<String>,
+    pub separator: Option<String>,
+}
+
+impl SidebarTokenLayout {
+    /// The text with `format` applied; rules match the raw value instead.
+    pub fn apply(&self, value: &str) -> String {
+        match &self.format {
+            Some(format) => format.replacen("{}", value, 1),
+            None => value.to_owned(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,6 +152,7 @@ pub enum SpaceSidebarToken {
         token: Box<SpaceSidebarToken>,
         style: SidebarTokenStyle,
         rules: Vec<SidebarTokenRule>,
+        layout: SidebarTokenLayout,
     },
 }
 
@@ -141,6 +161,13 @@ impl AgentSidebarToken {
         match self {
             Self::Styled { style, rules, .. } => matching_style(rules, *style, value),
             _ => Some(SidebarTokenStyle::default()),
+        }
+    }
+
+    pub fn layout(&self) -> Option<&SidebarTokenLayout> {
+        match self {
+            Self::Styled { layout, .. } => Some(layout),
+            _ => None,
         }
     }
 
@@ -157,6 +184,13 @@ impl SpaceSidebarToken {
         match self {
             Self::Styled { style, rules, .. } => matching_style(rules, *style, value),
             _ => Some(SidebarTokenStyle::default()),
+        }
+    }
+
+    pub fn layout(&self) -> Option<&SidebarTokenLayout> {
+        match self {
+            Self::Styled { layout, .. } => Some(layout),
+            _ => None,
         }
     }
 
@@ -180,7 +214,18 @@ struct RawStyledSidebarToken {
     dim: Option<bool>,
     #[serde(default)]
     rules: Vec<SidebarTokenRule>,
+    #[serde(default)]
+    format: Option<String>,
+    #[serde(default)]
+    separator: Option<String>,
 }
+
+type RawParts = (
+    String,
+    Option<SidebarTokenStyle>,
+    Vec<SidebarTokenRule>,
+    SidebarTokenLayout,
+);
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -190,9 +235,9 @@ enum RawSidebarToken {
 }
 
 impl RawSidebarToken {
-    fn parts(self) -> Result<(String, Option<SidebarTokenStyle>, Vec<SidebarTokenRule>), String> {
+    fn parts(self) -> Result<RawParts, String> {
         match self {
-            Self::Plain(token) => Ok((token, None, Vec::new())),
+            Self::Plain(token) => Ok((token, None, Vec::new(), SidebarTokenLayout::default())),
             Self::Styled(token) => {
                 if token.rules.len() > 16 {
                     return Err("sidebar tokens may contain at most 16 rules".into());
@@ -202,6 +247,14 @@ impl RawSidebarToken {
                 {
                     return Err("sidebar rules require a text-valued token".into());
                 }
+                if let Some(format) = &token.format {
+                    if matches!(token.token.as_str(), "state_icon" | "git_status") {
+                        return Err("sidebar format requires a text-valued token".into());
+                    }
+                    if format.matches("{}").count() != 1 {
+                        return Err("sidebar format must contain exactly one `{}`".into());
+                    }
+                }
                 Ok((
                     token.token,
                     Some(SidebarTokenStyle {
@@ -210,6 +263,10 @@ impl RawSidebarToken {
                         dim: token.dim,
                     }),
                     token.rules,
+                    SidebarTokenLayout {
+                        format: token.format,
+                        separator: token.separator,
+                    },
                 ))
             }
         }
@@ -250,7 +307,7 @@ impl<'de> Deserialize<'de> for AgentSidebarToken {
     where
         D: serde::Deserializer<'de>,
     {
-        let (value, style, rules) = RawSidebarToken::deserialize(deserializer)?
+        let (value, style, rules, layout) = RawSidebarToken::deserialize(deserializer)?
             .parts()
             .map_err(serde::de::Error::custom)?;
         let token = parse_sidebar_token(
@@ -272,6 +329,7 @@ impl<'de> Deserialize<'de> for AgentSidebarToken {
             token: Box::new(token),
             style,
             rules,
+            layout,
         }))
     }
 }
@@ -287,7 +345,7 @@ impl<'de> Deserialize<'de> for SpaceSidebarToken {
     where
         D: serde::Deserializer<'de>,
     {
-        let (value, style, rules) = RawSidebarToken::deserialize(deserializer)?
+        let (value, style, rules, layout) = RawSidebarToken::deserialize(deserializer)?
             .parts()
             .map_err(serde::de::Error::custom)?;
         let token = parse_sidebar_token(
@@ -306,6 +364,7 @@ impl<'de> Deserialize<'de> for SpaceSidebarToken {
             token: Box::new(token),
             style,
             rules,
+            layout,
         }))
     }
 }

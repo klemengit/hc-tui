@@ -476,6 +476,18 @@ async fn the_agent_count_token_renders_nothing_for_a_space_without_agents() {
     assert!(!empty.contains('·') && !empty.contains('0'), "{empty}");
 }
 #[tokio::test]
+async fn the_goal_row_shows_the_count_in_parentheses_only_above_one() {
+    let mut app = count_app(
+        "[['state_icon', 'workspace', { token = 'agent_count', dim = true, format = '({})', separator = ' ', rules = [{ lt = 2, hide = true }] }]]",
+    );
+    let lines = sidebar(&mut app);
+    let (_, one) = line_of(&lines, "one").unwrap();
+    let (_, two) = line_of(&lines, "two").unwrap();
+    assert!(one.contains("one (2)"), "{one}");
+    assert!(two.contains("two") && !two.contains('('), "{two}");
+}
+
+#[tokio::test]
 async fn the_open_key_on_an_agent_focuses_it_like_enter() {
     let mut app = tree_app(SpaceAgentsConfig::None);
     press_key(&mut app, 'l');

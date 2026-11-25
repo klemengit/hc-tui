@@ -168,6 +168,18 @@ pub(crate) fn resolved_token_spans(
     let mut remaining = max_width
         .saturating_sub(separator_width + fixed_width)
         .saturating_sub(minimum);
+    // A count is short and says more than a clipped name: it gets its full
+    // width before the other texts grow.
+    for (index, budget) in budgets.iter_mut().enumerate() {
+        if *budget > 0
+            && matches!(resolved[index].kind, ResolvedTokenKind::AgentCount(_))
+            && flexible_widths[index] > *budget
+        {
+            let take = (flexible_widths[index] - *budget).min(remaining);
+            *budget += take;
+            remaining -= take;
+        }
+    }
     while remaining > 0 {
         let mut grew = false;
         for (budget, width) in budgets.iter_mut().zip(&flexible_widths) {
@@ -191,7 +203,7 @@ pub(crate) fn resolved_token_spans(
         if position > 0 {
             let previous = &resolved[visible_indices[position - 1]];
             spans.push(Span::styled(
-                tokens::separator(previous, token),
+                tokens::separator(previous, token).to_owned(),
                 Style::default().fg(palette.overlay0),
             ));
         }
@@ -288,5 +300,59 @@ mod tests {
         assert_eq!(spaces, Rect::new(0, 0, 25, 30));
         assert!(agents.is_empty());
         assert!(sidebar_section_divider_rect(area, 0.5, false).is_empty());
+    }
+
+    fn text(span_list: &[Span<'static>]) -> String {
+        span_list.iter().map(|span| span.content.as_ref()).collect()
+    }
+
+    fn tokens() -> Vec<ResolvedToken> {
+        let mut count = ResolvedToken {
+            kind: ResolvedTokenKind::AgentCount("(2)".into()),
+            style: Default::default(),
+            separator: Some(" ".into()),
+        };
+        count.separator = Some(" ".into());
+        vec![
+            ResolvedToken {
+                kind: ResolvedTokenKind::StateIcon,
+                style: Default::default(),
+                separator: None,
+            },
+            ResolvedToken {
+                kind: ResolvedTokenKind::Workspace("assistant".into()),
+                style: Default::default(),
+                separator: None,
+            },
+            count,
+        ]
+    }
+
+    fn render(max_width: usize) -> String {
+        let palette = Palette::catppuccin();
+        let style = Style::default();
+        text(&resolved_token_spans(
+            &tokens(),
+            ("●", style),
+            style,
+            style,
+            style,
+            style,
+            &palette,
+            max_width,
+        ))
+    }
+
+    #[test]
+    fn a_token_separator_replaces_the_default_one() {
+        assert_eq!(render(40), "● assistant (2)");
+    }
+
+    #[test]
+    fn a_narrow_row_clips_the_name_before_the_count() {
+        let row = render(10);
+        assert!(row.ends_with(" (2)"), "{row:?}");
+        assert!(row.starts_with("● "), "{row:?}");
+        assert_eq!(display_width(&row), 10);
     }
 }
