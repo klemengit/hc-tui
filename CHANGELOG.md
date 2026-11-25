@@ -62,6 +62,10 @@ All notable changes to hc-tui are documented here. The format follows
   that many milliseconds.
 - `[ui] goto_footer_rule` (default `false`): `true` draws a horizontal rule
   between the Go to list and its footer lines.
+- `[keys] recent_agent` (unbound by default): focuses the agent focused before
+  this one, so it toggles between two agents; presses within
+  `[ui] recent_agent_window_ms` (default `1000`) step further back in the order
+  agents were last focused, across machines. Works as `"ctrl+tab"`.
 - `[ui] agent_cycle` (default `"all"`): `"active"` makes previous/next agent
   skip idle and unknown agents.
 - `[keys] navigate_tree` (default `false`), `navigate_enter` (`"l"`) and

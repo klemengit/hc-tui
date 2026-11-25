@@ -69,7 +69,13 @@ impl App {
         match key.input.action {
             Action::Press => {
                 let initial = self.key_context();
+                let recent_presses = self.recent_agents.presses;
                 let mut target = self.route_key_press(&key, width);
+                // Any other key ends a run of `recent_agent` presses; arming
+                // the prefix does not, so a prefix binding can chain too.
+                if self.recent_agents.presses == recent_presses && !self.prefix.armed() {
+                    self.recent_agents.end_step();
+                }
                 if target.is_some() && self.pane_page_scroll(&key) {
                     // A plain page key paged the pane's own scrollback
                     // instead of reaching the program; its release is

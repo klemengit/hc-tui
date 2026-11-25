@@ -107,7 +107,7 @@ impl App {
                     self.reveal_workspace(target);
                 }
             }
-            A::PreviousAgent | A::NextAgent | A::FocusAgent(_) => {
+            A::PreviousAgent | A::NextAgent | A::FocusAgent(_) | A::RecentAgent => {
                 let ids = crate::chrome::agents::ordered_agent_pane_ids(
                     snapshot,
                     self.shell.agent_panel_sort,
@@ -118,6 +118,21 @@ impl App {
                 let at = ids.iter().position(|id| Some(id) == focus.as_ref());
                 let index = match action {
                     A::FocusAgent(i) => i,
+                    A::RecentAgent => {
+                        let now = (self.recent_agents.clock)();
+                        let window =
+                            std::time::Duration::from_millis(self.shell.recent_agent_window_ms);
+                        let Some(target) =
+                            self.recent_agents
+                                .press(&ids, focus.as_deref(), now, window)
+                        else {
+                            return;
+                        };
+                        let Some(index) = ids.iter().position(|id| id == &target) else {
+                            return;
+                        };
+                        index
+                    }
                     A::PreviousAgent | A::NextAgent
                         if self.shell.agent_cycle == crate::config::AgentCycleConfig::Active =>
                     {
@@ -145,7 +160,7 @@ impl App {
                 };
                 if let Some(id) = ids.get(index) {
                     self.focused = Some(id.clone());
-                    if matches!(action, A::PreviousAgent | A::NextAgent)
+                    if matches!(action, A::PreviousAgent | A::NextAgent | A::RecentAgent)
                         && !self.hit_map.agents.iter().any(|(_, visible)| visible == id)
                         && !self
                             .hit_map

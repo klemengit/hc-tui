@@ -87,6 +87,8 @@ pub struct ClientShellConfig {
     pub goto_footer_rule: bool,
     /// `[ui] seen_after_ms` — dwell before a focused pane's completion is seen.
     pub seen_after_ms: u64,
+    /// `[ui] recent_agent_window_ms` — how long quick `recent_agent` presses chain.
+    pub recent_agent_window_ms: u64,
     pub status_indicators: StatusIndicatorStyle,
     pub theme_name: String,
     pub theme_runtime: ThemeRuntimeConfig,
@@ -191,6 +193,7 @@ impl ClientShellConfig {
             agent_cycle: ui.agent_cycle,
             goto_footer_rule: ui.goto_footer_rule,
             seen_after_ms: ui.seen_after_ms,
+            recent_agent_window_ms: ui.recent_agent_window_ms,
             status_indicators: ui.status_indicators,
             theme_name,
             theme_runtime,

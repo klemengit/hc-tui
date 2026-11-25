@@ -33,6 +33,7 @@ mod pane_cache;
 mod pane_exit_focus;
 mod popup_placement;
 mod preferences;
+mod recent_agents;
 mod reload;
 mod remote_children;
 mod reveal_focus;

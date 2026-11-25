@@ -54,6 +54,7 @@ impl Config {
             next_workspace: ActionKeybinds::default(),
             previous_agent: ActionKeybinds::default(),
             next_agent: ActionKeybinds::default(),
+            recent_agent: ActionKeybinds::default(),
             focus_agent: Vec::new(),
             new_tab: ActionKeybinds::default(),
             rename_tab: ActionKeybinds::default(),
@@ -183,6 +184,7 @@ impl Config {
             apply_action!(keybinds.next_workspace, next_workspace, source);
             apply_action!(keybinds.previous_agent, previous_agent, source);
             apply_action!(keybinds.next_agent, next_agent, source);
+            apply_action!(keybinds.recent_agent, recent_agent, source);
             apply_indexed!(
                 keybinds.focus_agent,
                 focus_agent,

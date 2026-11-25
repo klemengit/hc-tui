@@ -91,6 +91,10 @@ pub struct UiConfig {
     /// before its completion counts as seen (and `herdr.seen` is written).
     /// 0 acknowledges on the first fresh paint, as herdr does. Default: 0.
     pub seen_after_ms: u64,
+    /// hc-tui's own key: milliseconds after a `recent_agent` press within
+    /// which the next press steps one agent further back instead of
+    /// toggling. 0 makes every press toggle. Default: 1000.
+    pub recent_agent_window_ms: u64,
     /// Agent status indicator style. Saved values are "dots" or "symbols". Default: "dots".
     pub status_indicators: StatusIndicatorStyle,
     /// Expanded sidebar row composition.
@@ -135,6 +139,7 @@ impl Default for UiConfig {
             goto_footer_rule: false,
             agent_cycle: AgentCycleConfig::All,
             seen_after_ms: 0,
+            recent_agent_window_ms: 1000,
             status_indicators: StatusIndicatorStyle::Dots,
             sidebar: SidebarConfig::default(),
             accent: "cyan".into(),

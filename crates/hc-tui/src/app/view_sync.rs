@@ -25,7 +25,8 @@ impl App {
     /// for the next watcher publish. A publish whose projection inputs
     /// are unchanged skips the rebuild but still runs the cheap
     /// post-steps (title, copy/float focus).
-    /// Remember the focused agent as its space's last-focused one.
+    /// Remember the focused agent as its space's last-focused one, and as
+    /// the newest entry of the `recent_agent` list.
     fn track_last_agent(&mut self) {
         let Some(focused) = self.focused.as_deref() else {
             return;
@@ -39,6 +40,7 @@ impl App {
             }) else {
                 continue;
             };
+            self.recent_agents.focused(focused);
             let key = (endpoint.endpoint_id.clone(), agent.workspace_id.clone());
             if self.last_agents.get(&key).map(String::as_str) != Some(focused) {
                 self.last_agents.insert(key, focused.to_owned());

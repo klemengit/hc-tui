@@ -245,6 +245,47 @@ fn sidebar_offsets_default_to_the_herdr_layout_and_parse() {
 }
 
 #[test]
+fn recent_agent_window_ms_defaults_to_1000_and_parses() {
+    assert_eq!(
+        load_text("[ui]\nsidebar_width = 30\n")
+            .config
+            .ui
+            .recent_agent_window_ms,
+        1000
+    );
+    let loaded = load_text("[ui]\nrecent_agent_window_ms = 400\n");
+    assert_eq!(loaded.config.ui.recent_agent_window_ms, 400);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+}
+
+#[test]
+fn recent_agent_is_unbound_by_default_and_ctrl_tab_is_distinct_from_tab() {
+    use crate::input::{KeybindAction, KeybindMatch, resolve_direct_binding, terminal_key_of};
+    let resolve = |keybinds: &crate::config::Keybinds, bytes: &str| {
+        let key = crate::raw_events::parse_terminal_key_sequence(bytes).unwrap();
+        match resolve_direct_binding(keybinds, &terminal_key_of(&key)) {
+            Some(KeybindMatch::Action(action)) => Some(action),
+            _ => None,
+        }
+    };
+    let loaded = load_text("[ui]\nsidebar_width = 30\n");
+    let keybinds = &loaded.config.live_keybinds().keybinds;
+    assert!(keybinds.recent_agent.labels().is_empty());
+    assert_eq!(resolve(keybinds, "\x1b[9;5u"), None);
+
+    let loaded = load_text("[keys]\nrecent_agent = 'ctrl+tab'\n");
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let keybinds = &loaded.config.live_keybinds().keybinds;
+    assert_eq!(keybinds.recent_agent.labels(), ["ctrl+tab"]);
+    // Kitty keyboard protocol: Ctrl+Tab is CSI 9;5u, plain Tab stays a tab.
+    assert_eq!(
+        resolve(keybinds, "\x1b[9;5u"),
+        Some(KeybindAction::RecentAgent)
+    );
+    assert_eq!(resolve(keybinds, "\t"), None);
+}
+
+#[test]
 fn navigate_tree_defaults_off_with_h_and_l_for_leave_and_enter() {
     let loaded = load_text("[ui]\nsidebar_width = 30\n");
     let nav = &loaded.config.live_keybinds().keybinds.navigate;

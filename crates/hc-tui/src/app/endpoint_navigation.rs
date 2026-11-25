@@ -22,7 +22,7 @@ impl App {
                 self.navigate_endpoint_workspace(action);
                 true
             }
-            A::PreviousAgent | A::NextAgent | A::FocusAgent(_) => {
+            A::PreviousAgent | A::NextAgent | A::FocusAgent(_) | A::RecentAgent => {
                 self.navigate_endpoint_agent(action);
                 true
             }
@@ -88,6 +88,25 @@ impl App {
                 if index >= agents.len() {
                     return;
                 }
+                index
+            }
+            A::RecentAgent => {
+                let ids = agents
+                    .iter()
+                    .map(|target| target.pane_id.clone())
+                    .collect::<Vec<_>>();
+                let now = (self.recent_agents.clock)();
+                let window = std::time::Duration::from_millis(self.shell.recent_agent_window_ms);
+                let focused = self.focused.clone();
+                let Some(target) = self
+                    .recent_agents
+                    .press(&ids, focused.as_deref(), now, window)
+                else {
+                    return;
+                };
+                let Some(index) = ids.iter().position(|id| id == &target) else {
+                    return;
+                };
                 index
             }
             A::PreviousAgent | A::NextAgent => {

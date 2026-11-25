@@ -110,6 +110,7 @@ pub struct KeysConfigOverlay {
     pub next_workspace: Option<BindingConfig>,
     pub previous_agent: Option<BindingConfig>,
     pub next_agent: Option<BindingConfig>,
+    pub recent_agent: Option<BindingConfig>,
     pub focus_agent: Option<BindingConfig>,
     pub remote_image_paste: Option<String>,
     pub new_tab: Option<BindingConfig>,
@@ -197,6 +198,9 @@ pub struct KeysConfig {
     pub next_workspace: BindingConfig,
     pub previous_agent: BindingConfig,
     pub next_agent: BindingConfig,
+    /// hc-tui's own key: focus the agent focused before this one; quick
+    /// repeats step further back (`[ui] recent_agent_window_ms`). Unbound.
+    pub recent_agent: BindingConfig,
     pub focus_agent: BindingConfig,
     pub remote_image_paste: String,
     pub new_tab: BindingConfig,
@@ -273,6 +277,7 @@ impl Default for KeysConfig {
             next_workspace: BindingConfig::empty(),
             previous_agent: BindingConfig::empty(),
             next_agent: BindingConfig::empty(),
+            recent_agent: BindingConfig::empty(),
             focus_agent: BindingConfig::empty(),
             remote_image_paste: "ctrl+v".into(),
             new_tab: BindingConfig::one("prefix+c"),
@@ -400,6 +405,7 @@ impl<'de> Deserialize<'de> for KeysConfig {
         apply_field!(next_workspace);
         apply_field!(previous_agent);
         apply_field!(next_agent);
+        apply_field!(recent_agent);
         apply_field!(focus_agent);
         apply_field!(remote_image_paste);
         apply_field!(new_tab);

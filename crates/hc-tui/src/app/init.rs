@@ -123,6 +123,7 @@ impl App {
             popup_pending: None,
             command_overlay: None,
             last_agents: Default::default(),
+            recent_agents: Default::default(),
             popup_screen: None,
             pane_screen: None,
             peek: None,

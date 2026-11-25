@@ -49,6 +49,7 @@ mod preferences;
 mod presentation;
 mod probe;
 mod reap;
+mod recent_agents;
 mod reload;
 mod routing;
 mod runtime;
@@ -222,6 +223,8 @@ pub struct App {
     /// `show_last_agent`: the agent focused last in each space, by endpoint
     /// and space id. In memory only.
     last_agents: std::collections::HashMap<(ClientEndpointId, String), String>,
+    /// `[keys] recent_agent`: agents in the order they were last focused.
+    recent_agents: recent_agents::RecentAgents,
     popup_screen: Option<screen_file::ScreenFile>,
     pane_screen: Option<screen_file::ScreenFile>,
     /// The worker-peek overlay — herdr-app's `terminal-peek`.
