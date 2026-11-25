@@ -202,6 +202,7 @@ the same `config.toml` reports them as unknown keys.
 | `[ui.sidebar] machine_indent` | `2` | Columns the spaces and agent rows under a machine header are shifted right. |
 | `[ui.sidebar] space_padding` | `1` | Blank columns before a space row's first line; its further lines sit two columns deeper. Applies with one machine too. |
 | `[ui.sidebar] agent_indent` | `2` | Columns an agent row under a space is indented by, on top of the row's own padding (worktree child spaces add 4). |
+| `[ui] goto_footer_rule` | `false` | `true` draws a horizontal rule, like the one under the search line, between the Go to list (`prefix+g`) and its three footer lines (selected row, path, key help). The list loses one row. |
 | `[ui] agent_cycle` | `"all"` | `"active"` makes previous/next agent (`Alt+Up` / `Alt+Down`) step only through agents that are not idle or unknown, the same set as `agents = "active"`. List order is unchanged; see [keys](keys.md#alt-shortcuts). |
 | `[ui] agent_panel` | `true` | `false` hides the agents panel. The spaces list takes the whole sidebar height and the section divider disappears. Agent next/previous and the agent shortcuts keep working. The collapsed sidebar drops its agent icons too. The mobile switcher is not affected. |
 

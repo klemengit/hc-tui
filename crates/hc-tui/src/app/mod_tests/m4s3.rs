@@ -473,3 +473,36 @@ async fn machine_keys_are_inert_in_search_and_with_one_machine() {
     assert!(app.navigator.as_ref().unwrap().search_focused);
     assert_eq!(app.navigator.as_ref().unwrap().query.as_str(), "j");
 }
+
+#[tokio::test]
+async fn the_footer_rule_is_off_by_default_and_costs_a_row_when_on() {
+    let mut app = app_nav();
+    open(&mut app);
+    // Footer: detail, meta, key help; the rule sits right above them.
+    let help_row = |lines: &[String]| lines.iter().position(|l| l.contains("rows · ")).unwrap();
+    let is_rule = |l: &str| l.contains("────────────") && !l.contains("Go to");
+    let lines = screen(&mut app);
+    let help = help_row(&lines);
+    assert!(!is_rule(&lines[help - 3]), "{}", lines[help - 3]);
+    let rows_off = app.navigator_hits.rows.len();
+    let body_off = app.navigator_hits.rows[0].0.y;
+
+    app.shell.goto_footer_rule = true;
+    let lines = screen(&mut app);
+    let help = help_row(&lines);
+    assert!(is_rule(&lines[help - 3]), "{}", lines[help - 3]);
+    assert_eq!(app.navigator_hits.rows[0].0.y, body_off);
+    assert!(app.navigator_hits.rows.len() <= rows_off);
+    // The body is one row shorter: a full list loses its last row.
+    let mut tiny = app_nav();
+    tiny.shell.goto_footer_rule = true;
+    open(&mut tiny);
+    let area = draw_to(&mut tiny, 60, 13);
+    let lines = screen_lines(&area);
+    let help = help_row(&lines);
+    assert!(is_rule(&lines[help - 3]));
+    assert_eq!(tiny.navigator_hits.rows.len(), 3);
+    tiny.shell.goto_footer_rule = false;
+    draw_to(&mut tiny, 60, 13);
+    assert_eq!(tiny.navigator_hits.rows.len(), 4);
+}

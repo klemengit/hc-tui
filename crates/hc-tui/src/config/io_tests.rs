@@ -61,6 +61,26 @@ fn agent_panel_space_headers_loads_without_unknown_key_diagnostics() {
 }
 
 #[test]
+fn goto_footer_rule_defaults_off_and_parses_a_bool() {
+    assert!(!crate::config::UiConfig::default().goto_footer_rule);
+    let loaded = load_text("[ui]\nsidebar_width = 30\n");
+    assert!(!loaded.config.ui.goto_footer_rule);
+    let loaded = load_text("[ui]\ngoto_footer_rule = true\n");
+    assert!(loaded.config.ui.goto_footer_rule);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let loaded = load_text("[ui]\ngoto_footer_rule = 'yes'\n");
+    assert!(!loaded.config.ui.goto_footer_rule);
+    assert!(
+        loaded
+            .diagnostics
+            .iter()
+            .any(|d| d.starts_with("config parse error")),
+        "{:?}",
+        loaded.diagnostics
+    );
+}
+
+#[test]
 fn agent_panel_defaults_on_and_loads_without_unknown_key_diagnostics() {
     assert!(crate::config::UiConfig::default().agent_panel);
     let loaded = load_text("[ui]\nsidebar_width = 30\n");

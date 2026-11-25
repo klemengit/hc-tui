@@ -45,6 +45,7 @@ pub(crate) fn render_navigator_overlay(
     active_endpoint_id: &ClientEndpointId,
     p: &Palette,
     machine_keys: &str,
+    footer_rule: bool,
 ) -> Option<NavigatorRender> {
     let a = b.area;
     let width = a.width.saturating_sub(4).min(116);
@@ -138,7 +139,12 @@ pub(crate) fn render_navigator_overlay(
         &"─".repeat(i.width as usize),
         Style::default().fg(p.surface1).bg(p.panel_bg),
     );
-    let body = Rect::new(i.x, i.y + 2, i.width, i.height.saturating_sub(5));
+    let body = Rect::new(
+        i.x,
+        i.y + 2,
+        i.width,
+        i.height.saturating_sub(5 + u16::from(footer_rule)),
+    );
     let selected = navigator_selected_index(&rows, n).unwrap_or(0);
     let max = rows.len().saturating_sub(body.height as usize);
     let scroll = n
@@ -340,6 +346,16 @@ pub(crate) fn render_navigator_overlay(
     }
     if let Some(track) = scrollbar {
         scroll::render_scrollbar_buffer(b, metrics, track, p.overlay0, p.overlay1, "▐");
+    }
+    if footer_rule {
+        put_text(
+            b,
+            i.x,
+            i.bottom() - 4,
+            i.width,
+            &"─".repeat(i.width as usize),
+            Style::default().fg(p.surface1).bg(p.panel_bg),
+        );
     }
     if let Some(r) = rows.get(selected) {
         put_text(

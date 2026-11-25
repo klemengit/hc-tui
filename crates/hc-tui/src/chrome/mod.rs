@@ -83,6 +83,8 @@ pub struct ClientShellConfig {
     pub agent_panel: bool,
     /// `[ui] agent_cycle` — which agents previous/next agent step through.
     pub agent_cycle: crate::config::AgentCycleConfig,
+    /// `[ui] goto_footer_rule` — rule above the Go to overlay's footer.
+    pub goto_footer_rule: bool,
     /// `[ui] seen_after_ms` — dwell before a focused pane's completion is seen.
     pub seen_after_ms: u64,
     pub status_indicators: StatusIndicatorStyle,
@@ -187,6 +189,7 @@ impl ClientShellConfig {
             agent_panel_space_headers: ui.agent_panel_space_headers,
             agent_panel: ui.agent_panel,
             agent_cycle: ui.agent_cycle,
+            goto_footer_rule: ui.goto_footer_rule,
             seen_after_ms: ui.seen_after_ms,
             status_indicators: ui.status_indicators,
             theme_name,

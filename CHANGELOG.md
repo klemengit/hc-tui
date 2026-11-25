@@ -60,6 +60,8 @@ All notable changes to hc-tui are documented here. The format follows
 - `[ui] seen_after_ms` (default `0`): a completion counts as seen, and
   `herdr.seen` is written, only after the pane stayed focused and visible for
   that many milliseconds.
+- `[ui] goto_footer_rule` (default `false`): `true` draws a horizontal rule
+  between the Go to list and its footer lines.
 - `[ui] agent_cycle` (default `"all"`): `"active"` makes previous/next agent
   skip idle and unknown agents.
 - `[keys] navigate_tree` (default `false`), `navigate_enter` (`"l"`) and

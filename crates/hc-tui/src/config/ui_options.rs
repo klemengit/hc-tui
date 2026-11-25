@@ -81,6 +81,9 @@ pub struct UiConfig {
     /// `false` the spaces list takes the whole sidebar height; agent
     /// next/previous actions keep working. Default: true.
     pub agent_panel: bool,
+    /// hc-tui's own key: draw a horizontal rule between the Go to list and
+    /// its three footer lines. Default: false.
+    pub goto_footer_rule: bool,
     /// hc-tui's own key: which agents `previous_agent` / `next_agent` step
     /// through, "all" or "active" (not idle or unknown). Default: "all".
     pub agent_cycle: AgentCycleConfig,
@@ -129,6 +132,7 @@ impl Default for UiConfig {
             agent_panel_sort: AgentPanelSortConfig::Priority,
             agent_panel_space_headers: false,
             agent_panel: true,
+            goto_footer_rule: false,
             agent_cycle: AgentCycleConfig::All,
             seen_after_ms: 0,
             status_indicators: StatusIndicatorStyle::Dots,

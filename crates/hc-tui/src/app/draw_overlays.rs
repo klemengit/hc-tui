@@ -251,6 +251,7 @@ pub(super) fn render_overlays_and_cursor(
             &app.projection.active_endpoint_id,
             &app.shell.palette,
             &machine_keys,
+            app.shell.goto_footer_rule,
         )
         .unwrap_or_default()
     } else {
