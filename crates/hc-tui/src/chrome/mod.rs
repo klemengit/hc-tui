@@ -29,6 +29,7 @@ pub mod panes;
 pub mod panes_draw;
 pub(crate) mod release_notes;
 pub mod render;
+pub(crate) mod row_look;
 pub mod scroll;
 pub(crate) mod selection_highlight;
 pub(crate) mod settings;
@@ -74,6 +75,8 @@ pub struct ClientShellConfig {
     /// `[ui.sidebar]` left offsets (`machine_padding`, `machine_indent`,
     /// `space_padding`, `agent_indent`).
     pub indents: crate::config::SidebarIndents,
+    /// `[ui.sidebar]` `focused_style`, `cursor_style`, `open_style`.
+    pub row_styles: [crate::config::SidebarRowStyle; 3],
     pub agent_panel_sort: AgentPanelSortConfig,
     pub agent_panel_space_headers: bool,
     /// `[ui] agent_panel` — draw the agents panel under the spaces list.
@@ -135,6 +138,11 @@ pub struct ClientShellConfig {
 }
 
 impl ClientShellConfig {
+    /// The configured sidebar row looks under the active palette.
+    pub(crate) fn row_looks(&self) -> row_look::SidebarLooks {
+        row_look::SidebarLooks::new(&self.row_styles, &self.palette)
+    }
+
     pub(crate) fn layout_config(&self) -> snapshot::ClientShellLayoutConfig {
         snapshot::ClientShellLayoutConfig {
             sidebar_min_width: self.sidebar_min_width,
@@ -170,6 +178,11 @@ impl ClientShellConfig {
             spaces: ui.sidebar.spaces.clone(),
             agents: ui.sidebar.agents.clone(),
             indents: ui.sidebar.indents(),
+            row_styles: [
+                ui.sidebar.focused_style.clone(),
+                ui.sidebar.cursor_style.clone(),
+                ui.sidebar.open_style.clone(),
+            ],
             agent_panel_sort: ui.agent_panel_sort,
             agent_panel_space_headers: ui.agent_panel_space_headers,
             agent_panel: ui.agent_panel,

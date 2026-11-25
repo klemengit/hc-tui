@@ -1,7 +1,10 @@
 // Derived from herdr src/config/sidebar.rs (Apache-2.0). Deserialize-only:
 // hc-tui never writes the user config, so Serialize impls are dropped.
 
+mod looks;
 mod rules;
+
+pub use looks::{SidebarColor, SidebarRowStyle};
 
 pub use rules::SidebarTokenRule;
 pub(crate) use rules::matching_style;
@@ -466,6 +469,13 @@ pub struct SidebarConfig {
     /// hc-tui's own key: columns an agent row under a space is indented
     /// by, on top of the row's own padding. Default: 2.
     pub agent_indent: u16,
+    /// hc-tui's own key: the look of the space and agent row the focused
+    /// terminal is in. Default: none (the theme's active row).
+    pub focused_style: SidebarRowStyle,
+    /// hc-tui's own key: the look of the navigate-mode cursor row.
+    pub cursor_style: SidebarRowStyle,
+    /// hc-tui's own key: the look of a space whose agents the cursor is in.
+    pub open_style: SidebarRowStyle,
 }
 
 impl Default for SidebarConfig {
@@ -477,6 +487,9 @@ impl Default for SidebarConfig {
             machine_indent: 2,
             space_padding: 1,
             agent_indent: 2,
+            focused_style: SidebarRowStyle::default(),
+            cursor_style: SidebarRowStyle::default(),
+            open_style: SidebarRowStyle::default(),
         }
     }
 }

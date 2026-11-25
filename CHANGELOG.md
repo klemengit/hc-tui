@@ -22,6 +22,10 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[ui.sidebar] focused_style`, `cursor_style` and `open_style` (default: none):
+  separate colours, attributes and a left marker character for the focused
+  space and agent, the navigate-mode cursor and the space the cursor is
+  inside. See docs/sidebar.md.
 - `[keys] navigate_enter_single` (default `"enter"`): `"jump"` makes
   `navigate_enter` on a space with exactly one agent focus that agent and leave
   navigate mode.

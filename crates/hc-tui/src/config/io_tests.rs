@@ -493,3 +493,24 @@ fn navigate_enter_single_defaults_to_enter_and_parses_jump() {
     let loaded = load_text("[keys]\nnavigate_enter_single = 'zap'\n");
     assert!(!loaded.diagnostics.is_empty());
 }
+
+#[test]
+fn sidebar_row_styles_default_to_none_and_reject_bad_values() {
+    let defaults = crate::config::SidebarConfig::default();
+    assert_eq!(defaults.focused_style, Default::default());
+    assert_eq!(defaults.cursor_style, Default::default());
+    assert_eq!(defaults.open_style, Default::default());
+    let loaded = load_text(
+        "[ui.sidebar]\nfocused_style = { marker = '▌', marker_fg = 'accent', bold = true }\ncursor_style = { bg = '#336699', reverse = false }\nopen_style = { marker = '▾' }\n",
+    );
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    assert_eq!(loaded.config.ui.sidebar.open_style.marker, Some('▾'));
+    for bad in [
+        "focused_style = { bg = 'nope' }",
+        "focused_style = { marker = 'ab' }",
+        "focused_style = { colour = 'accent' }",
+    ] {
+        let loaded = load_text(&format!("[ui.sidebar]\n{bad}\n"));
+        assert!(!loaded.diagnostics.is_empty(), "{bad}");
+    }
+}

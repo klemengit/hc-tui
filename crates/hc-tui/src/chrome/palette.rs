@@ -57,6 +57,31 @@ pub use crate::config::THEME_NAMES;
 use crate::config::canonical_theme_name;
 
 impl Palette {
+    /// A palette colour by its `[ui.sidebar]` style name.
+    pub fn named(&self, name: &str) -> Option<Color> {
+        Some(match name {
+            "accent" => self.accent,
+            "panel" => self.panel_bg,
+            "sidebar" => self.sidebar_bg,
+            "active_row" => self.active_row_bg,
+            "selection" => self.selection_bg,
+            "surface0" => self.surface0,
+            "surface1" => self.surface1,
+            "overlay0" => self.overlay0,
+            "overlay1" => self.overlay1,
+            "text" => self.text,
+            "subtext0" => self.subtext0,
+            "mauve" => self.mauve,
+            "green" => self.green,
+            "yellow" => self.yellow,
+            "red" => self.red,
+            "blue" => self.blue,
+            "teal" => self.teal,
+            "peach" => self.peach,
+            _ => return None,
+        })
+    }
+
     /// Resolve a theme by name. Returns None for unknown names.
     pub fn from_name(name: &str) -> Option<Self> {
         match canonical_theme_name(name)? {

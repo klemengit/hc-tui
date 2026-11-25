@@ -268,9 +268,17 @@ pub(crate) fn render_workspace_rows(
     selected: bool,
     navigating: bool,
     dragged: bool,
+    open: bool,
     padding: u16,
+    looks: &crate::chrome::row_look::SidebarLooks,
     palette: &Palette,
 ) {
+    // A configured marker needs a cell left of the text on every row.
+    let padding = if looks.reserves_marker() {
+        padding.max(1)
+    } else {
+        padding
+    };
     for (row_index, row) in rows.iter().enumerate() {
         let y = area.y + row_index as u16;
         if y >= area.bottom() {
@@ -354,4 +362,10 @@ pub(crate) fn render_workspace_rows(
             }
         }
     }
+    let marker_x = if entry.indented {
+        area.x
+    } else {
+        area.x + padding.saturating_sub(1)
+    };
+    looks.paint(buffer, area, (marker_x, area.y), open, focused, selected);
 }

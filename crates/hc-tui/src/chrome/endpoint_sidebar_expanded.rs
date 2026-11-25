@@ -29,6 +29,7 @@ pub(crate) fn render_expanded(
     hits: &mut ShellHitMap,
 ) {
     let palette = &config.palette;
+    let looks = config.row_looks();
     super::render::render_sidebar_background(buffer, area, palette);
     hits.sidebar_divider = if area.is_empty() {
         Rect::default()
@@ -181,7 +182,12 @@ pub(crate) fn render_expanded(
                     selected,
                     state.selected_workspace_id.is_some(),
                     false,
+                    state.navigate_agent.is_some()
+                        && state.selected_workspace_id.is_some_and(|target| {
+                            target.matches(&endpoint.endpoint_id, &workspace.workspace_id)
+                        }),
                     config.indents.space_padding,
+                    &looks,
                     palette,
                 );
                 if endpoint.status != ClientEndpointStatus::Online {
@@ -234,6 +240,7 @@ pub(crate) fn render_expanded(
                             config.indents.agent_indent,
                         ),
                     row.cursor,
+                    Some(&looks),
                 );
                 if endpoint.status != ClientEndpointStatus::Online {
                     buffer.set_style(

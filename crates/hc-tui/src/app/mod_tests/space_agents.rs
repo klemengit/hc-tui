@@ -531,3 +531,84 @@ async fn the_open_key_on_an_agent_focuses_it_like_enter() {
     assert!(app.navigate_agent.is_none());
     assert!(app.navigate_target.is_none());
 }
+
+// ---- row looks: focused_style, cursor_style, open_style ----
+
+fn looks_app(toml: &str) -> App {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    let dir = crate::test_support::TestDir::new("hctui-row-looks");
+    let path = dir.join("config.toml");
+    std::fs::write(&path, toml).unwrap();
+    let loaded = crate::config::load(&path);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+    let sidebar = loaded.config.ui.sidebar;
+    app.shell.row_styles = [
+        sidebar.focused_style,
+        sidebar.cursor_style,
+        sidebar.open_style,
+    ];
+    app
+}
+
+fn cell_at(
+    backend: &ratatui::backend::TestBackend,
+    lines: &[String],
+    needle: &str,
+    col: u16,
+) -> ratatui::buffer::Cell {
+    let (row, _) = line_of(lines, needle).unwrap_or_else(|| panic!("{needle} in {lines:#?}"));
+    backend.buffer()[(col, row as u16)].clone()
+}
+
+#[tokio::test]
+async fn default_looks_draw_the_theme_highlight_and_no_marker() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    assert!(app.shell.row_looks() == Default::default());
+    let backend = draw_to(&mut app, 100, 30);
+    let lines = screen_lines(&backend);
+    // The cursor sits on the focused space `one`: the cursor background.
+    let one = cell_at(&backend, &lines, "one", 3);
+    assert_eq!(
+        one.bg,
+        crate::chrome::workspace::workspace_selection_background(&app.shell.palette)
+    );
+    let two = cell_at(&backend, &lines, "two", 3);
+    assert_ne!(two.bg, one.bg);
+    let (_, one_line) = line_of(&lines, "one").unwrap();
+    assert!(!one_line.contains('▌') && !one_line.contains('▾'));
+}
+
+#[tokio::test]
+async fn configured_looks_mark_focus_cursor_and_the_open_space() {
+    let mut app = looks_app(
+        "[ui.sidebar]\nfocused_style = { marker = '▌', marker_fg = 'accent', bold = true }\ncursor_style = { bg = 'accent' }\nopen_style = { marker = '▾' }\n",
+    );
+    let accent = app.shell.palette.accent;
+    // Cursor on the space (also the focused one): cursor background,
+    // focused marker.
+    let backend = draw_to(&mut app, 100, 30);
+    let lines = screen_lines(&backend);
+    let marker = cell_at(&backend, &lines, "one", 0);
+    assert_eq!(marker.symbol(), "▌");
+    assert_eq!(marker.fg, accent);
+    assert_eq!(cell_at(&backend, &lines, "one", 5).bg, accent);
+    // The text did not move: the marker took the padding cell.
+    let (_, one_line) = line_of(&lines, "one").unwrap();
+    let mut plain = tree_app(SpaceAgentsConfig::None);
+    let plain_lines = screen_lines(&draw_to(&mut plain, 100, 30));
+    let (_, plain_line) = line_of(&plain_lines, "one").unwrap();
+    let column = |line: &str| line.find("one").map(|byte| line[..byte].chars().count());
+    assert_eq!(column(one_line), column(plain_line));
+
+    // Inside the space: it is open, the agent under the cursor is accented.
+    press_key(&mut app, 'l');
+    let backend = draw_to(&mut app, 100, 30);
+    let lines = screen_lines(&backend);
+    let (_, open) = line_of(&lines, "one").unwrap();
+    assert!(open.starts_with('▾') || open.starts_with("▌"), "{open}");
+    let alpha = cell_at(&backend, &lines, "alpha", 6);
+    assert_eq!(alpha.bg, accent);
+    // The other space shows neither marker.
+    let (_, two) = line_of(&lines, "two").unwrap();
+    assert!(!two.contains('▌') && !two.contains('▾'), "{two}");
+}

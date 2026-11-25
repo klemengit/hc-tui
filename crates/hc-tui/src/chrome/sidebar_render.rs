@@ -33,6 +33,7 @@ pub(crate) fn render_sidebar(
     hits: &mut ShellHitMap,
 ) {
     let palette = &config.palette;
+    let looks = config.row_looks();
     super::render::render_sidebar_background(buffer, area, palette);
     hits.sidebar_divider = if area.is_empty() {
         Rect::default()
@@ -177,6 +178,7 @@ pub(crate) fn render_sidebar(
                 config,
                 super::space_agents::agent_indent(*workspace_indented, config.indents.agent_indent),
                 row.cursor,
+                Some(&looks),
             );
             hits.space_agents
                 .push((rect, ClientEndpointId::Local, row.row.pane_id.clone()));
@@ -216,7 +218,12 @@ pub(crate) fn render_sidebar(
             selected,
             state.selected_workspace_id.is_some(),
             dragged,
+            state.navigate_agent.is_some()
+                && state.selected_workspace_id.is_some_and(|target| {
+                    target.matches(state.active_endpoint_id, &workspace.workspace_id)
+                }),
             config.indents.space_padding,
+            &looks,
             palette,
         );
         let group_toggle = render_parent_group_toggle(

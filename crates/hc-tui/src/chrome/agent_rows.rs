@@ -193,7 +193,7 @@ pub(crate) fn render_agent_row(
     row: &AgentRow,
     config: &super::ClientShellConfig,
 ) {
-    render_agent_row_indented(buffer, rect, row, config, 0, false);
+    render_agent_row_indented(buffer, rect, row, config, 0, false, None);
 }
 
 /// `render_agent_row` shifted right by `indent` columns, for an agent drawn
@@ -205,6 +205,7 @@ pub(crate) fn render_agent_row_indented(
     config: &super::ClientShellConfig,
     indent: u16,
     cursor: bool,
+    looks: Option<&super::row_look::SidebarLooks>,
 ) {
     let palette = &config.palette;
     let row_style = if cursor {
@@ -254,6 +255,22 @@ pub(crate) fn render_agent_row_indented(
         Paragraph::new(Line::from(spans)).style(row_style).render(
             Rect::new(rect.x, rect.y + index as u16, rect.width, 1),
             buffer,
+        );
+    }
+    if let Some(looks) = looks {
+        let shown = Rect::new(
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height.min(rows.len() as u16),
+        );
+        looks.paint(
+            buffer,
+            shown,
+            (rect.x + indent, rect.y),
+            false,
+            row.focused,
+            cursor,
         );
     }
 }
