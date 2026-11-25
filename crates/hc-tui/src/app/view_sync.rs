@@ -25,6 +25,27 @@ impl App {
     /// for the next watcher publish. A publish whose projection inputs
     /// are unchanged skips the rebuild but still runs the cheap
     /// post-steps (title, copy/float focus).
+    /// Remember the focused agent as its space's last-focused one.
+    fn track_last_agent(&mut self) {
+        let Some(focused) = self.focused.as_deref() else {
+            return;
+        };
+        for endpoint in &self.projection.endpoints {
+            let Some(agent) = endpoint.snapshot.as_deref().and_then(|snapshot| {
+                snapshot
+                    .agents
+                    .iter()
+                    .find(|agent| agent.pane_id == focused)
+            }) else {
+                continue;
+            };
+            let key = (endpoint.endpoint_id.clone(), agent.workspace_id.clone());
+            if self.last_agents.get(&key).map(String::as_str) != Some(focused) {
+                self.last_agents.insert(key, focused.to_owned());
+            }
+        }
+    }
+
     pub(super) fn refresh_projection(&mut self) {
         if self.focused != self.last_focus {
             self.previous_pane = self.last_focus.clone();
@@ -51,6 +72,7 @@ impl App {
                 .projections
                 .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         }
+        self.track_last_agent();
         self.update_tab_status(Instant::now());
         self.update_window_title();
         // The reference's `apply_active_snapshot` copy arms: pane loss

@@ -36,7 +36,7 @@ fn workspace_id(snapshot: &ClientShellSnapshot, label: &str) -> String {
 fn none_lists_no_agents() {
     let snapshot = snapshot();
     let one = workspace_id(&snapshot, "one");
-    assert!(space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::None).is_empty());
+    assert!(space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::None, None).is_empty());
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn active_skips_idle_and_orders_by_priority() {
     let one = workspace_id(&snapshot, "one");
     // Blocked > done > working; the idle t1 stays out.
     assert_eq!(
-        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::Active),
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::Active, None),
         ["t3", "t4", "t2"]
     );
 }
@@ -55,9 +55,37 @@ fn all_lists_idle_agents_last() {
     let snapshot = snapshot();
     let one = workspace_id(&snapshot, "one");
     assert_eq!(
-        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::All),
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::All, None),
         ["t3", "t4", "t2", "t1"]
     );
+}
+
+#[test]
+fn the_kept_agent_is_listed_once_beside_the_active_ones() {
+    let snapshot = snapshot();
+    let one = workspace_id(&snapshot, "one");
+    // The idle t1 joins the active rows, in the usual order, once.
+    assert_eq!(
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::Active, Some("t1")),
+        ["t3", "t4", "t2", "t1"]
+    );
+    // A kept agent that is active already is not doubled.
+    assert_eq!(
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::Active, Some("t2")),
+        ["t3", "t4", "t2"]
+    );
+    // It is listed even with `agents = none`.
+    assert_eq!(
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::None, Some("t1")),
+        ["t1"]
+    );
+}
+
+#[test]
+fn the_kept_agent_needs_a_space_of_two_agents() {
+    let snapshot = snapshot();
+    let two = workspace_id(&snapshot, "two");
+    assert!(space_agent_pane_ids(&snapshot, &two, SpaceAgentsConfig::None, Some("t5")).is_empty());
 }
 
 #[test]
@@ -65,10 +93,10 @@ fn a_space_lists_only_its_own_agents() {
     let snapshot = snapshot();
     let two = workspace_id(&snapshot, "two");
     assert_eq!(
-        space_agent_pane_ids(&snapshot, &two, SpaceAgentsConfig::All),
+        space_agent_pane_ids(&snapshot, &two, SpaceAgentsConfig::All, None),
         ["t5"]
     );
-    assert!(space_agent_pane_ids(&snapshot, "missing", SpaceAgentsConfig::All).is_empty());
+    assert!(space_agent_pane_ids(&snapshot, "missing", SpaceAgentsConfig::All, None).is_empty());
 }
 
 #[test]
@@ -84,7 +112,7 @@ fn the_most_recent_change_wins_between_equal_statuses() {
         };
     }
     assert_eq!(
-        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::All),
+        space_agent_pane_ids(&snapshot, &one, SpaceAgentsConfig::All, None),
         ["t2", "t1", "t3", "t4"]
     );
 }
@@ -131,6 +159,7 @@ fn rows_mark_the_cursor_agent() {
         SpaceAgentsConfig::All,
         Some("t2"),
         &shell,
+        None,
         None,
     );
     let marked = rows

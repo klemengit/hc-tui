@@ -514,3 +514,11 @@ fn sidebar_row_styles_default_to_none_and_reject_bad_values() {
         assert!(!loaded.diagnostics.is_empty(), "{bad}");
     }
 }
+
+#[test]
+fn show_last_agent_defaults_off_and_parses() {
+    assert!(!crate::config::SpacesSidebarConfig::default().show_last_agent);
+    let loaded = load_text("[ui.sidebar.spaces]\nshow_last_agent = true\n");
+    assert!(loaded.config.ui.sidebar.spaces.show_last_agent);
+    assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
+}

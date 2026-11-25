@@ -219,6 +219,9 @@ pub struct App {
     command_overlay: Option<popup::CommandOverlay>,
     /// `screen = true` files staged between a command's start and the
     /// popup / command pane that owns them.
+    /// `show_last_agent`: the agent focused last in each space, by endpoint
+    /// and space id. In memory only.
+    last_agents: std::collections::HashMap<(ClientEndpointId, String), String>,
     popup_screen: Option<screen_file::ScreenFile>,
     pane_screen: Option<screen_file::ScreenFile>,
     /// The worker-peek overlay — herdr-app's `terminal-peek`.

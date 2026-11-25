@@ -134,6 +134,17 @@ pub(crate) fn list_rows(
                 state.navigate_agent,
                 config,
                 None,
+                config
+                    .spaces
+                    .show_last_agent
+                    .then(|| {
+                        state.last_agents.get(&(
+                            state.active_endpoint_id.clone(),
+                            workspace.workspace_id.clone(),
+                        ))
+                    })
+                    .flatten()
+                    .map(String::as_str),
             )
             .into_iter()
             .map(|row| ListRow::Agent {

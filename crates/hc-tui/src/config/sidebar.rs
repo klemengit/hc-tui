@@ -437,6 +437,9 @@ pub struct SpacesSidebarConfig {
     pub row_gap: u16,
     /// hc-tui's own key: list agents under their space row. Default: none.
     pub agents: SpaceAgentsConfig,
+    /// hc-tui's own key: in a space with two or more agents, always list
+    /// the agent focused there last, idle or not. Default: false.
+    pub show_last_agent: bool,
 }
 
 impl Default for SpacesSidebarConfig {
@@ -448,6 +451,7 @@ impl Default for SpacesSidebarConfig {
             ],
             row_gap: DEFAULT_SIDEBAR_ROW_GAP,
             agents: SpaceAgentsConfig::None,
+            show_last_agent: false,
         }
     }
 }

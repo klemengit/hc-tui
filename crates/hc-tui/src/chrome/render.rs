@@ -144,6 +144,8 @@ pub(crate) struct ShellRenderState<'a> {
     /// Tree navigation: the agent under the cursor inside the selected
     /// space (`[keys] navigate_tree`). `None` when the cursor is on a space.
     pub navigate_agent: Option<&'a str>,
+    /// `show_last_agent`: the agent focused last in each space.
+    pub last_agents: &'a HashMap<(ClientEndpointId, String), String>,
     pub reveal_navigation_workspace: &'a mut bool,
     pub dragged_workspace_id: Option<&'a str>,
     pub workspace_drop_indicator_row: Option<u16>,

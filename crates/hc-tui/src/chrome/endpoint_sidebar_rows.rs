@@ -63,6 +63,17 @@ pub(super) fn build_rows(
                     state.navigate_agent,
                     config,
                     Some(&endpoint.label),
+                    config
+                        .spaces
+                        .show_last_agent
+                        .then(|| {
+                            state.last_agents.get(&(
+                                endpoint.endpoint_id.clone(),
+                                workspace.workspace_id.clone(),
+                            ))
+                        })
+                        .flatten()
+                        .map(String::as_str),
                 )
                 .into_iter()
                 .map(|mut row| {

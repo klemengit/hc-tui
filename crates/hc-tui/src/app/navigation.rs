@@ -82,6 +82,7 @@ impl App {
                     snapshot,
                     &target.workspace_id,
                     crate::config::SpaceAgentsConfig::All,
+                    None,
                 )
             })
             .unwrap_or_default()
@@ -223,7 +224,19 @@ impl App {
                     let jump = agents.len() == 1
                         && self.live.keybinds.navigate.enter_single
                             == crate::config::NavigateEnterSingle::Jump;
-                    if let Some(first) = agents.into_iter().next() {
+                    // With `show_last_agent` the cursor starts on the agent
+                    // focused last in this space.
+                    let last = self
+                        .navigate_target
+                        .as_ref()
+                        .filter(|_| self.shell.spaces.show_last_agent)
+                        .and_then(|target| {
+                            self.last_agents
+                                .get(&(target.endpoint_id.clone(), target.workspace_id.clone()))
+                        })
+                        .filter(|last| agents.contains(last))
+                        .cloned();
+                    if let Some(first) = last.or_else(|| agents.into_iter().next()) {
                         self.navigate_agent = Some(first);
                         self.shell_state.reveal_navigation_workspace = true;
                         if jump {

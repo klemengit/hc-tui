@@ -106,6 +106,7 @@ pub fn draw(app: &mut App, frame: &mut ratatui::Frame, _now: Instant) {
         tab_drag_insert_index: app.tab_drag_index,
         selected_workspace_id: app.navigate_target.as_ref(),
         navigate_agent: app.navigate_agent.as_deref(),
+        last_agents: &app.last_agents,
         reveal_navigation_workspace: &mut app.shell_state.reveal_navigation_workspace,
         dragged_workspace_id: None,
         workspace_drop_indicator_row: None,

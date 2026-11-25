@@ -612,3 +612,44 @@ async fn configured_looks_mark_focus_cursor_and_the_open_space() {
     let (_, two) = line_of(&lines, "two").unwrap();
     assert!(!two.contains('▌') && !two.contains('▾'), "{two}");
 }
+
+// ---- show_last_agent ----
+
+#[tokio::test]
+async fn show_last_agent_lists_the_last_focused_agent_of_a_multi_agent_space() {
+    let mut app = app_with_agents(SpaceAgentsConfig::None);
+    let lines = sidebar(&mut app);
+    assert!(line_of(&lines, "beta").is_none(), "{lines:#?}");
+    app.shell.spaces.show_last_agent = true;
+    let lines = sidebar(&mut app);
+    // t1 (idle, focused) is listed under `one`; t2 stays out, and the
+    // one-agent space `two` lists nothing.
+    assert!(line_of(&lines, "beta").is_some(), "{lines:#?}");
+    assert!(line_of(&lines, "alpha").is_none(), "{lines:#?}");
+    assert!(line_of(&lines, "gamma").is_none(), "{lines:#?}");
+    // Moving focus to t2 makes t2 the kept one; t1 is remembered no more.
+    app.focused = Some("t2".into());
+    app.refresh_projection();
+    let lines = sidebar(&mut app);
+    assert!(line_of(&lines, "alpha").is_some(), "{lines:#?}");
+    assert!(line_of(&lines, "beta").is_none(), "{lines:#?}");
+}
+
+#[tokio::test]
+async fn show_last_agent_adds_no_duplicate_to_the_active_rows() {
+    let mut app = app_with_agents(SpaceAgentsConfig::Active);
+    app.shell.spaces.show_last_agent = true;
+    app.focused = Some("t2".into());
+    app.refresh_projection();
+    let lines = sidebar(&mut app);
+    assert_eq!(lines.iter().filter(|l| l.contains("alpha")).count(), 1);
+}
+
+#[tokio::test]
+async fn the_cursor_enters_a_space_on_its_last_agent_with_show_last_agent() {
+    let mut app = tree_app(SpaceAgentsConfig::None);
+    app.shell.spaces.show_last_agent = true;
+    press_key(&mut app, 'l');
+    // t1 is focused, so it is the last one; the default would be t2.
+    assert_eq!(app.navigate_agent.as_deref(), Some("t1"));
+}

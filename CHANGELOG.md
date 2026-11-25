@@ -22,6 +22,9 @@ All notable changes to hc-tui are documented here. The format follows
 
 ### Added
 
+- `[ui.sidebar.spaces] show_last_agent` (default `false`): a space with two
+  or more agents always lists the agent focused there last, and tree
+  navigation starts the cursor on it.
 - `[ui.sidebar] focused_style`, `cursor_style` and `open_style` (default: none):
   separate colours, attributes and a left marker character for the focused
   space and agent, the navigate-mode cursor and the space the cursor is

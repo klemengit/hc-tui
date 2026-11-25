@@ -69,15 +69,23 @@ pub(crate) fn space_agent_pane_ids(
     snapshot: &ClientShellSnapshot,
     workspace_id: &str,
     filter: SpaceAgentsConfig,
+    keep: Option<&str>,
 ) -> Vec<String> {
-    if filter == SpaceAgentsConfig::None {
+    // `keep` (`show_last_agent`) is listed in a space of two or more agents
+    // whatever its status, and without any `agents` filter.
+    let keep = keep.filter(|_| space_agent_count(snapshot, workspace_id) >= 2);
+    if filter == SpaceAgentsConfig::None && keep.is_none() {
         return Vec::new();
     }
     let mut agents = snapshot
         .agents
         .iter()
         .filter(|agent| agent.workspace_id == workspace_id)
-        .filter(|agent| filter == SpaceAgentsConfig::All || is_active(agent.agent_status))
+        .filter(|agent| {
+            Some(agent.pane_id.as_str()) == keep
+                || (filter != SpaceAgentsConfig::None
+                    && (filter == SpaceAgentsConfig::All || is_active(agent.agent_status)))
+        })
         .collect::<Vec<_>>();
     agents.sort_by_key(|agent| {
         (
@@ -106,8 +114,9 @@ pub(crate) fn space_agent_rows(
     cursor: Option<&str>,
     config: &super::ClientShellConfig,
     machine: Option<&str>,
+    keep: Option<&str>,
 ) -> Vec<SpaceAgentRow> {
-    space_agent_pane_ids(snapshot, workspace_id, filter)
+    space_agent_pane_ids(snapshot, workspace_id, filter, keep)
         .into_iter()
         .filter_map(|pane_id| {
             let row = agent_row(snapshot, &pane_id, config, machine)?;
